@@ -98,7 +98,8 @@ def run_session(seed, PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi_m
 
     Estado s = a1 * m + a2 (índices de preço do período anterior; 225 estados).
     Devolve: convergiu (bool), períodos até parar, Δ, tamanho do ciclo,
-             preço médio (índice) no ciclo, Q final, estratégia gulosa final.
+             preço médio (índice) no ciclo, Q final, estratégia gulosa final,
+             estado em que a sessão parou.
     """
     np.random.seed(seed)
     m = PI.shape[0]
@@ -171,4 +172,4 @@ def run_session(seed, PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi_m
         pidx = -1.0
 
     delta_idx = (pbar - pi_nash) / (pi_mon - pi_nash)
-    return converged, t, delta_idx, n, pidx, Q, greedy
+    return converged, t, delta_idx, n, pidx, Q, greedy, s

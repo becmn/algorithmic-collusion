@@ -69,7 +69,7 @@ print("\nsemente  convergiu  períodos    Δ       ciclo  segundos")
 secs, periods, deltas, conv = [], [], [], []
 for seed in range(1, 21):
     t0 = time.perf_counter()
-    ok, t, d, n, pidx, Q, g = one(seed)
+    ok, t, d, n, pidx, Q, g, s_end = one(seed)
     dt = time.perf_counter() - t0
     secs.append(dt); periods.append(t); deltas.append(d); conv.append(ok)
     print(f"{seed:>7}  {str(ok):>9}  {t:>9,}  {d:6.3f}  {n:>5}  {dt:8.3f}")
