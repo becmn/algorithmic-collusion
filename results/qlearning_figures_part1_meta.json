@@ -1,0 +1,106 @@
+{
+  "description": "Fase 1.6, parte 1: distribuição de Δ e Δ × períodos até convergir (caso base, 1.000 sessões da Fase 1.3). Descritivo e exploratório.",
+  "date": "2026-10-13T18:32:48",
+  "source": "results/qlearning_base_sessions.csv",
+  "distribution": {
+    "n": 1000,
+    "mean": 0.849348000076128,
+    "sd": 0.11411614939582072,
+    "median": 0.8675865940474076,
+    "q1": 0.7794801458916245,
+    "q3": 0.946121430644497,
+    "min": 0.4465157453243085,
+    "max": 0.9997339378191982,
+    "share_delta_gt_0_5": 0.995,
+    "share_delta_gt_0_5_wilson95": [
+      0.988349044553552,
+      0.9978624644862107
+    ],
+    "share_delta_lt_0": 0.0,
+    "share_delta_lt_0_wilson95": [
+      2.168404344971009e-19,
+      0.0038267585456940676
+    ],
+    "mean_constant_price": 0.8663825838872318,
+    "mean_cycle": 0.822479017363768,
+    "n_constant_price": 612,
+    "n_cycle": 388
+  },
+  "delta_vs_periods": {
+    "correlation": {
+      "pearson_r": -0.4202118587264254,
+      "pearson_p": 4.70331983459855e-44,
+      "spearman_rho": -0.2348236203502758,
+      "spearman_p": 5.3982374053639344e-14
+    },
+    "bands": [
+      {
+        "band": "Δ ≤ 0.6",
+        "n": 31,
+        "periods_mean_millions": 2.599,
+        "periods_median_millions": 2.614,
+        "periods_sd_millions": 0.293,
+        "share_cycle": 0.484
+      },
+      {
+        "band": "0.6 < Δ ≤ 0.7",
+        "n": 76,
+        "periods_mean_millions": 2.165,
+        "periods_median_millions": 2.182,
+        "periods_sd_millions": 0.415,
+        "share_cycle": 0.526
+      },
+      {
+        "band": "0.7 < Δ ≤ 0.8",
+        "n": 216,
+        "periods_mean_millions": 1.91,
+        "periods_median_millions": 1.836,
+        "periods_sd_millions": 0.359,
+        "share_cycle": 0.454
+      },
+      {
+        "band": "0.8 < Δ ≤ 0.9",
+        "n": 285,
+        "periods_mean_millions": 1.801,
+        "periods_median_millions": 1.759,
+        "periods_sd_millions": 0.264,
+        "share_cycle": 0.379
+      },
+      {
+        "band": "Δ > 0.9",
+        "n": 392,
+        "periods_mean_millions": 1.793,
+        "periods_median_millions": 1.773,
+        "periods_sd_millions": 0.223,
+        "share_cycle": 0.324
+      },
+      {
+        "band": "|Δ − 0.849| ≤ 0.02",
+        "n": 101,
+        "periods_mean_millions": 1.818,
+        "periods_median_millions": 1.764,
+        "periods_sd_millions": 0.285,
+        "share_cycle": 0.485
+      },
+      {
+        "band": "All sessions",
+        "n": 1000,
+        "periods_mean_millions": 1.874,
+        "periods_median_millions": 1.798,
+        "periods_sd_millions": 0.331,
+        "share_cycle": 0.388
+      }
+    ]
+  },
+  "figures": [
+    "paper/figures/fig_delta_distribution.png",
+    "paper/figures/fig_delta_distribution.pdf",
+    "paper/figures/fig_delta_vs_periods.png",
+    "paper/figures/fig_delta_vs_periods.pdf"
+  ],
+  "versions": {
+    "numpy": "2.4.6",
+    "matplotlib": "3.11.2",
+    "scipy": "1.17.1"
+  }
+}
