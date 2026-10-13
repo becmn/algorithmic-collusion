@@ -1,0 +1,140 @@
+{
+  "description": "Teste de melhor resposta, Q-learning caso base, sementes 1 a 1000",
+  "date": "2026-10-13T12:59:48",
+  "method": {
+    "rival": "estratégia final gulosa do rival, fixa (Q congelada, ε = 0)",
+    "calvano": "Q(s,a) = π(a,b) + δ Q(s', σ(s')): continuação pela própria estratégia final (sistema linear da eq. 3); testa desvios de um período; versão comparada com a Tabela 1",
+    "otima": "Q*(s,a) = π(a,b) + δ max Q*(s',·): qualquer desvio; exploratória",
+    "solver": "iteração até diferença < 1e-12",
+    "nash_on_path": "os dois agentes jogam a melhor ação em todos os estados do ciclo-limite",
+    "spe": "os dois agentes jogam a melhor ação nos 225 estados",
+    "qloss": "[max Q(s,·) − Q(s,σ(s))] / max Q(s,·), média sobre estados e agentes (leitura adotada pelo projeto; o artigo diz só que a perda é em %)",
+    "tie_tolerance_relative": 1e-09
+  },
+  "targets_calvano_table_1": {
+    "nash_share": {
+      "todas": 0.505,
+      "constante_simetrico": 0.686,
+      "constante_assimetrico": 0.661,
+      "constante_total": 0.672,
+      "ciclo_2": 0.294,
+      "ciclo_3_ou_mais": 0.025
+    },
+    "qloss_path": 0.002,
+    "qloss_all": 0.018,
+    "type_share": {
+      "constante_simetrico": 0.277,
+      "constante_assimetrico": 0.366,
+      "ciclo_2": 0.238,
+      "ciclo_3_ou_mais": 0.119
+    }
+  },
+  "summary": {
+    "n_sessions": 1000,
+    "n_tested": 1000,
+    "seconds": 80.87268049999966,
+    "same_delta_as_phase_1_3": true,
+    "by_version": {
+      "calvano": {
+        "nash_share": 0.492,
+        "nash_share_wilson95": [
+          0.46110359363184095,
+          0.5229576367455414
+        ],
+        "at_least_one_br_share": 0.851,
+        "spe_share": 0.0,
+        "qloss_path_mean": 0.001781971876414981,
+        "qloss_path_sd": 0.0034078060397223207,
+        "qloss_all_mean": 0.018065556774204464,
+        "qloss_all_sd": 0.006177437337473076,
+        "delta_mean_nash_sessions": 0.8566364730723133,
+        "delta_sd_nash_sessions": 0.10691245786513524,
+        "corr_delta_nash": 0.06288649520791363,
+        "by_type": {
+          "constante_simetrico": {
+            "n": 261,
+            "share_of_sessions": 0.261,
+            "nash_share": 0.7318007662835249,
+            "qloss_path_mean": 0.0007386164703651021
+          },
+          "constante_assimetrico": {
+            "n": 351,
+            "share_of_sessions": 0.351,
+            "nash_share": 0.6324786324786325,
+            "qloss_path_mean": 0.0012009119027474274
+          },
+          "ciclo_2": {
+            "n": 274,
+            "share_of_sessions": 0.274,
+            "nash_share": 0.27007299270072993,
+            "qloss_path_mean": 0.0021651041398583044
+          },
+          "ciclo_3_ou_mais": {
+            "n": 114,
+            "share_of_sessions": 0.114,
+            "nash_share": 0.043859649122807015,
+            "qloss_path_mean": 0.005038897942668131
+          },
+          "constante_total": {
+            "n": 612,
+            "nash_share": 0.6748366013071896
+          }
+        }
+      },
+      "otima": {
+        "nash_share": 0.0,
+        "nash_share_wilson95": [
+          0.0,
+          0.003826898586390522
+        ],
+        "at_least_one_br_share": 0.128,
+        "spe_share": 0.0,
+        "qloss_path_mean": 0.006575248553977627,
+        "qloss_path_sd": 0.0024379524114724834,
+        "qloss_all_mean": 0.015636773147936406,
+        "qloss_all_sd": 0.0025374661956778636,
+        "delta_mean_nash_sessions": null,
+        "delta_sd_nash_sessions": null,
+        "corr_delta_nash": null,
+        "by_type": {
+          "constante_simetrico": {
+            "n": 261,
+            "share_of_sessions": 0.261,
+            "nash_share": 0.0,
+            "qloss_path_mean": 0.006020021750165728
+          },
+          "constante_assimetrico": {
+            "n": 351,
+            "share_of_sessions": 0.351,
+            "nash_share": 0.0,
+            "qloss_path_mean": 0.006129029906223872
+          },
+          "ciclo_2": {
+            "n": 274,
+            "share_of_sessions": 0.274,
+            "nash_share": 0.0,
+            "qloss_path_mean": 0.0069291113388885595
+          },
+          "ciclo_3_ou_mais": {
+            "n": 114,
+            "share_of_sessions": 0.114,
+            "nash_share": 0.0,
+            "qloss_path_mean": 0.008369797133722181
+          },
+          "constante_total": {
+            "n": 612,
+            "nash_share": 0.0
+          }
+        }
+      }
+    }
+  },
+  "versions": {
+    "python": "3.11.0",
+    "numpy": "2.4.6",
+    "numba": "0.68.0",
+    "scipy": "1.17.1",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "numba_threads": 8
+}
