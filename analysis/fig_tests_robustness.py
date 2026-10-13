@@ -133,7 +133,7 @@ tex += [r"\bottomrule", r"\end{tabular}", r"\end{table}", ""]
 # ---------------------------------------------------------------- figura 4 (texto principal)
 plt.rcParams.update({"font.size": 10, "axes.spines.top": False, "axes.spines.right": False})
 y = np.arange(len(table))[::-1]
-fig, (a1, a2) = plt.subplots(1, 2, figsize=(9.5, 4.5), sharey=True,
+fig, (a1, a2) = plt.subplots(1, 2, figsize=(10.5, 4.6), sharey=True,
                              gridspec_kw={"width_ratios": [1.1, 1]})
 for yi, r in zip(y, table):
     a1.errorbar(r["delta_mean"], yi, xerr=[[r["delta_mean"] - r["delta_ci_lo"]],
@@ -150,7 +150,7 @@ a1.set_xlim(-0.05, 1.12)
 a1.set_ylim(-0.6, y.max() + 1.1)
 a1.set_yticks(y)
 a1.set_yticklabels([r["label"] for r in table], fontsize=9)
-a1.set_xlabel("Profit gain Δ (mean, 95% CI; | = Calvano et al.)")
+a1.set_xlabel("Profit gain Δ (mean, 95% CI)")
 a1.set_title("Prices above competitive levels", fontsize=10)
 a1.axhline(y[3] - 0.5, color="0.8", lw=0.8)
 
@@ -167,12 +167,15 @@ for yi, r in zip(y, table):
     if r["target_nash"] is not None:
         a2.plot(r["target_nash"], yi + 0.15, marker="|", color="0.4", ms=12, mew=1.5)
 a2.set_xlim(-0.03, 1.03)
-a2.set_xlabel("Share of sessions (95% Wilson CI; | = Calvano et al.)")
+a2.set_xlabel("Share of sessions (95% Wilson CI)")
 a2.set_title("Equilibrium and punishment", fontsize=10)
 a2.axhline(y[3] - 0.5, color="0.8", lw=0.8)
 h, l = a2.get_legend_handles_labels()
-fig.tight_layout(rect=(0, 0.07, 1, 1))
-fig.legend(h, l, frameon=False, loc="lower center", ncol=2, fontsize=8.5)
+# o traço vertical "|" marca o alvo de Calvano et al.; explicado na legenda, não no eixo
+h.append(plt.Line2D([], [], color="0.4", marker="|", ls="none", ms=12, mew=1.5))
+l.append("Calvano et al. target")
+fig.tight_layout(rect=(0, 0.08, 1, 1), w_pad=2.5)
+fig.legend(h, l, frameon=False, loc="lower center", ncol=3, fontsize=8.5)
 saved = []
 for ext in ("png", "pdf"):
     fig.savefig(FIG / f"fig_robustness_tests.{ext}", dpi=200)

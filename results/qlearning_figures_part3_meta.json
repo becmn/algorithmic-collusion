@@ -1,6 +1,6 @@
 {
   "description": "Fase 1.6, parte 3: tabela e figuras dos testes obrigatórios (Fase 1.5)",
-  "date": "2026-10-13T19:04:08",
+  "date": "2026-10-13T19:09:00",
   "sources": [
     "results/qlearning_exploration_sessions.csv",
     "results/qlearning_controls_sessions.csv",
