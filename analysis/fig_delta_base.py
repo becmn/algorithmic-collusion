@@ -81,11 +81,10 @@ ax.hist([delta[~cycle], delta[cycle]], bins=bins, stacked=True,
         color=["0.35", "0.75"], edgecolor="white", linewidth=0.6,
         label=[f"Constant price (n = {dist['n_constant_price']})",
                f"Cycle (n = {dist['n_cycle']})"])
+# a média desta replicação e o alvo de Calvano coincidem (0,849): uma linha só, com os dois no rótulo
 ax.axvline(dist["mean"], color="black", lw=1.5, ls="-")
-ax.text(dist["mean"], ax.get_ylim()[1] * 0.97, f"  mean {dist['mean']:.3f}",
-        va="top", ha="left", fontsize=9)
-ax.axvline(DELTA_CALVANO, color="black", lw=1.2, ls="--")
-ax.text(DELTA_CALVANO, ax.get_ylim()[1] * 0.88, f"Calvano et al. {DELTA_CALVANO}  ",
+ax.text(dist["mean"], ax.get_ylim()[1] * 0.97,
+        f"mean {dist['mean']:.3f}  \n(Calvano et al.: {DELTA_CALVANO})  ",
         va="top", ha="right", fontsize=9)
 ax.axvline(DELTA_RANDOM, color="0.4", lw=1.0, ls=":")
 ax.text(DELTA_RANDOM, ax.get_ylim()[1] * 0.97, "  random prices", va="top",
@@ -134,7 +133,7 @@ corr = {
 }
 
 # ---------- figura 2: Δ × períodos ----------
-fig, ax = plt.subplots(figsize=(6.5, 4.0))
+fig, ax = plt.subplots(figsize=(6.5, 4.4))
 x = periods / 1e6
 ax.scatter(x[~cycle], delta[~cycle], s=9, marker="o", facecolor="0.3",
            edgecolor="none", alpha=0.55, label="Constant price")
@@ -147,7 +146,9 @@ ax.plot([t["periods_mean_millions"] for t in table[:5]], centers, color="black",
 ax.set_xlabel("Periods until convergence (millions)")
 ax.set_ylabel("Profit gain Δ")
 ax.set_ylim(0.40, 1.0)
-leg = ax.legend(loc="upper right", fontsize=9, markerscale=1.8, framealpha=0.95, edgecolor="0.8")
+# legenda abaixo do gráfico, para não cobrir pontos
+leg = ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=3, fontsize=9,
+                markerscale=1.8, frameon=False)
 for h in leg.legend_handles:
     h.set_alpha(1)
 ax.set_title(f"Δ vs. time to converge, {n} sessions "

@@ -1,0 +1,53 @@
+{
+  "description": "Fase 1.6, parte 2: trajetórias em blocos logarítmicos e caminhos de preço do teste de desvio, Q-learning caso base, sementes 1 a 1000",
+  "date": "2026-10-13T18:56:20",
+  "blocks": {
+    "n_blocks": 214,
+    "t_end": 10000000,
+    "rule": "limites = 0 e floor(geomspace(1, t_end, 241)) sem repetidos; média do bloco = média dos períodos do bloco",
+    "aggregation": "por bloco, só sessões que ainda rodam no bloco inteiro; a figura usa os blocos com as 1.000 sessões",
+    "last_period_with_all_sessions": 1090184
+  },
+  "examples_rule": "sessões com Δ mais próximo dos percentis 25, 50 e 75 da Fase 1.3 (empate: menor semente), fixada antes de ver as trajetórias",
+  "examples": {
+    "p25": {
+      "seed": 927,
+      "delta_target": 0.7794801458916245,
+      "delta": 0.7799953369767797,
+      "periods": 1861769,
+      "cycle_len": 3
+    },
+    "p50": {
+      "seed": 48,
+      "delta_target": 0.8675865940474076,
+      "delta": 0.8675865940474076,
+      "periods": 1554214,
+      "cycle_len": 1
+    },
+    "p75": {
+      "seed": 9,
+      "delta_target": 0.946121430644497,
+      "delta": 0.946121430644497,
+      "periods": 1767102,
+      "cycle_len": 2
+    }
+  },
+  "deviation_paths": "preço médio por τ nos ramos de controle e com desvio (firma 1 desvia em τ = 1), média sobre os pontos do ciclo = 1 observação; IC t de 95% entre sessões",
+  "checks": {
+    "todas_convergiram": true,
+    "contagem_blocos_igual_periodos": true,
+    "delta_igual_fase13": true,
+    "periodos_iguais_fase13": true,
+    "curva_R_igual_fase14": true,
+    "blocos_com_todas_as_sessoes": true
+  },
+  "seconds": 80.55551989999913,
+  "versions": {
+    "python": "3.11.0",
+    "numpy": "2.4.6",
+    "numba": "0.68.0",
+    "scipy": "1.17.1",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "numba_threads": 8
+}

@@ -1,6 +1,6 @@
 {
   "description": "Fase 1.6, parte 1: distribuição de Δ e Δ × períodos até convergir (caso base, 1.000 sessões da Fase 1.3). Descritivo e exploratório.",
-  "date": "2026-10-13T18:32:48",
+  "date": "2026-10-13T18:56:27",
   "source": "results/qlearning_base_sessions.csv",
   "distribution": {
     "n": 1000,
