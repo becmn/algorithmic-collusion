@@ -1,0 +1,88 @@
+{
+  "description": "Teste de desvio comum, Q-learning caso base, sementes 1 a 1000",
+  "date": "2026-10-13T07:46:47",
+  "protocol": {
+    "start": "estratégias gulosas finais; Q congelada; ε = 0",
+    "deviation": "firma 1, τ = 1, melhor resposta estática na grade ao preço da firma 2 em τ = 0",
+    "horizon": 15,
+    "discount": 0.95,
+    "grid_step": 0.03874750791318338,
+    "V_rule": "1º τ ≥ 2 com os dois preços a até 1 degrau do controle por 3 períodos seguidos dentro de τ ≤ 15; senão censurado",
+    "cycles": "desvio a partir de cada ponto do ciclo; média = 1 observação; V da sessão censurado se algum ponto do ciclo for censurado",
+    "V_rule_cycles": "em sessões em ciclo, volta = par de preços de novo no ciclo-limite, em qualquer fase, por 3 períodos seguidos (decisão de 13/10/2026); a regra preço a preço fica em V_phase",
+    "thetas": [
+      0.02,
+      0.05
+    ]
+  },
+  "targets_calvano_table_A5": {
+    "IR": -0.127,
+    "IC": 0.936,
+    "duration": 5.7
+  },
+  "summary": {
+    "n_sessions": 1000,
+    "n_tested": 1000,
+    "R_mean": -0.12460600720204718,
+    "R_sd": 0.0672302151914055,
+    "R_calvano_mean": -0.12408924727690905,
+    "G_mean": -0.05239510897307625,
+    "G_sd": 0.032928900936758695,
+    "share_unprofitable_G_lt_0": 0.96,
+    "share_unprofitable_wilson95": [
+      0.9459900625744302,
+      0.9704891907260906
+    ],
+    "V_mean_uncensored": 5.841383022934227,
+    "V_median_uncensored": 6.0,
+    "n_V_censored": 4,
+    "n_V_censored_constant": 2,
+    "n_V_censored_cycle": 2,
+    "n_V_phase_censored": 309,
+    "n_sessions_cycle": 388,
+    "n_sessions_with_start_without_deviation": 41,
+    "n_sessions_never_deviate": 0,
+    "classes": {
+      "theta_0.02": {
+        "A": 903,
+        "B": 4,
+        "C": 78,
+        "outro": 15
+      },
+      "theta_0.05": {
+        "A": 849,
+        "B": 2,
+        "C": 139,
+        "outro": 10
+      }
+    },
+    "seconds": 71.54805669999041,
+    "same_delta_as_phase_1_3": true
+  },
+  "mean_curve_rival_dev_over_ctrl_minus_1": [
+    0.0,
+    0.0,
+    -0.12407902812310106,
+    -0.1130738456442598,
+    -0.08605214033575986,
+    -0.05381691836620587,
+    -0.02823220604150306,
+    -0.0136043161449169,
+    -0.006443338292013192,
+    -0.0025257827686215968,
+    -0.0007720466384886883,
+    -2.6002011741914084e-05,
+    0.0014428032670362918,
+    0.0004881347885741235,
+    0.0005420344874043134,
+    0.000925358746506316
+  ],
+  "versions": {
+    "python": "3.11.0",
+    "numpy": "2.4.6",
+    "numba": "0.68.0",
+    "scipy": "1.17.1",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "numba_threads": 8
+}
