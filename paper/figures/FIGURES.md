@@ -1,0 +1,24 @@
+# Figuras e tabelas do artigo
+
+Plano decidido em 13/10/2026 (Fase 1.6). Todas as figuras são geradas por código a partir de `results/`; nenhuma é copiada de outro artigo.
+
+## Texto principal (no máximo 4 figuras)
+
+| Nº | Arquivo | Conteúdo | Script | Na Fase 4 |
+|---|---|---|---|---|
+| 1 | `fig_delta_distribution` | Distribuição de Δ entre sessões | `analysis/fig_delta_base.py` | Vira Δ por sessão/execução, com média e IC, por agente e prompt |
+| 2 | `fig_learning_trajectory` | Trajetória de Δ em eixo logarítmico, com o período 300 marcado | `analysis/fig_trajectories_deviation.py` | Recebe as trajetórias dos LLMs |
+| 3 | `fig_deviation_response` | Preços após o desvio forçado e curva R(τ) | `analysis/fig_trajectories_deviation.py` | Curvas R(τ) do LLM lado a lado |
+| 4 | `fig_robustness_tests` | Testes obrigatórios: Δ, fração em Nash e classe A por condição | `analysis/fig_tests_robustness.py` | Sem mudança |
+
+Tabela no texto principal: `paper/tables/table_mandatory_tests.tex` (testes obrigatórios da Fase 1.5).
+
+## Apêndice de robustez
+
+| Arquivo | Conteúdo | Script |
+|---|---|---|
+| `fig_delta_vs_periods` | Δ × períodos até convergir (componente oficial de 10/10/2026) | `analysis/fig_delta_base.py` |
+| `fig_price_trajectories` | Preços de 3 sessões (Δ mais próximo dos percentis 25, 50 e 75) | `analysis/fig_trajectories_deviation.py` |
+| `fig_memoryless_discount` | Δ sem memória por fator de desconto δ | `analysis/fig_tests_robustness.py` |
+
+As trajetórias dos LLMs, se feitas, vão para o apêndice.

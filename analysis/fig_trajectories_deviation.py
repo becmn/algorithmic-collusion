@@ -104,7 +104,9 @@ for ax, role in zip(axes, ("p25", "p50", "p75")):
             label="Firm 2")
     for y, lab in ((pN, "Nash"), (pM, "Monopoly")):
         ax.axhline(y, color="0.3", lw=0.8, ls=":")
-        ax.text(1.2, y, lab, fontsize=8, color="0.25", va="bottom")
+        # rótulo fora da área do gráfico, à direita, para não ficar coberto pelas linhas de preço
+        ax.text(1.01, y, lab, fontsize=8, color="0.25", va="center",
+                transform=ax.get_yaxis_transform())
     ax.set_xscale("log")
     ax.set_ylim(min(grid) - 0.02, max(grid) + 0.02)
     ax.set_ylabel("Price")

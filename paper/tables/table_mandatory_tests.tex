@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering\small
+\caption{Mandatory tests for the Q-learning agents (1{,}000 sessions per row). $\Delta$: mean with 95\% $t$ interval. Nash: share of sessions whose limit strategies are a Nash equilibrium on path (Calvano et al.'s one-period test). Unprofitable: share with discounted deviation gain $G<0$. Class A: punishment with return ($\theta = 2\%$). Calvano et al.\ targets in brackets. Deviation test not run for the controls (--).}
+\label{tab:mandatory-tests}
+\begin{tabular}{lcccc}
+\toprule
+Condition & $\Delta$ (95\% CI) & Nash & Unprofitable & Class A \\
+\midrule
+Base case ($\beta$ = 4$\times$$10^{-6}$) & 0.849 (0.842--0.856) [0.849] & 0.492 [0.505] & 0.960 [0.936] & 0.903 \\
+Shorter exploration ($\beta$ = $10^{-5}$) & 0.837 (0.830--0.844) & 0.204 & 0.928 & 0.858 \\
+Longer exploration ($\beta$ = 2$\times$$10^{-6}$) & 0.806 (0.798--0.814) & 0.714 & 0.987 & 0.951 \\
+Longer exploration ($\beta$ = $10^{-6}$) & 0.742 (0.734--0.750) & 0.798 & 0.982 & 0.948 \\
+\midrule
+No memory, $\delta$ = 0.95 & 0.957 (0.954--0.959) & 0.000 & -- & -- \\
+Memory 1, $\delta$ = 0 (myopic) & 0.217 (0.210--0.223) & 0.073 & -- & -- \\
+Calvano Table A1 control (k = 0, $\delta$ = 0) & 0.175 (0.165--0.184) [0.185] & 0.302 [0.273] & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
