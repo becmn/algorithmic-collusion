@@ -1,0 +1,159 @@
+{
+  "description": "Controles do Q-learning (sem memória; δ = 0; Tabela A1), sementes 1 a 1000",
+  "date": "2026-10-13T16:27:03",
+  "fixed": {
+    "n": 2,
+    "a": 2.0,
+    "a0": 0.0,
+    "mu": 0.25,
+    "c": 1.0,
+    "m": 15,
+    "xi": 0.1,
+    "t_stable": 100000,
+    "t_max": 1000000000
+  },
+  "method": {
+    "q0": "eq. 8 com o δ de cada condição; k = 0 usa 1 estado",
+    "delta_index": "ciclo-limite; sem convergência, média dos últimos 100.000 períodos",
+    "best_response": "leitura de Calvano (desvio de um período), como na parte 1",
+    "ci": "IC 95% t para Δ; Wilson para frações"
+  },
+  "check_vs_base": {
+    "n": 100,
+    "same_delta_as_phase_1_3": true,
+    "same_nash_as_part_1": true
+  },
+  "targets_table_A1": {
+    "delta": 0.185,
+    "nash_share": 0.273,
+    "qloss": 0.013
+  },
+  "base_case": {
+    "delta": 0.849,
+    "nash_share_projeto": 0.492
+  },
+  "summary": {
+    "sem_memoria_d095": {
+      "params": {
+        "memory": 0,
+        "delta": 0.95,
+        "alpha": 0.15,
+        "beta": 4e-06
+      },
+      "fonte": "Protocolo, controle 1 (Pesquisa 5, P3)",
+      "n_sessions": 1000,
+      "n_converged": 1000,
+      "seconds": 90.32701399999996,
+      "periods_mean": 1941271.788,
+      "periods_min": 1706838,
+      "periods_max": 2327117,
+      "delta_mean": 0.9565662294937965,
+      "delta_sd": 0.04459641780736008,
+      "delta_ci95_t": [
+        0.9537988128060174,
+        0.9593336461815757
+      ],
+      "delta_median": 0.9685979680168119,
+      "delta_iqr": [
+        0.9262500294506304,
+        0.9934204037509164
+      ],
+      "share_delta_gt_05": 1.0,
+      "share_delta_lt_0": 0.0,
+      "share_cycle": 0.0,
+      "price_mean": 1.8608602513394294,
+      "price_pct_over_nash": 26.337604025766037,
+      "nash_share": 0.0,
+      "nash_share_wilson95": [
+        0.0,
+        0.003826898586390522
+      ],
+      "qloss_path_mean": 0.008099503166991717,
+      "qloss_all_mean": 0.008099503166991717
+    },
+    "memoria1_d0": {
+      "params": {
+        "memory": 1,
+        "delta": 0.0,
+        "alpha": 0.15,
+        "beta": 4e-06
+      },
+      "fonte": "Protocolo, controle 2 (Pesquisa 5, P3)",
+      "n_sessions": 1000,
+      "n_converged": 1000,
+      "seconds": 104.25294440000016,
+      "periods_mean": 2174888.367,
+      "periods_min": 1619105,
+      "periods_max": 2829585,
+      "delta_mean": 0.2165763697739233,
+      "delta_sd": 0.10549049182148924,
+      "delta_ci95_t": [
+        0.21003019046575827,
+        0.22312254908208834
+      ],
+      "delta_median": 0.21759739187245053,
+      "delta_iqr": [
+        0.15559046233268892,
+        0.2812925353808895
+      ],
+      "share_delta_gt_05": 0.004,
+      "share_delta_lt_0": 0.042,
+      "share_cycle": 0.883,
+      "price_mean": 1.5371405027453457,
+      "price_pct_over_nash": 4.359608964738793,
+      "nash_share": 0.073,
+      "nash_share_wilson95": [
+        0.058458786926264744,
+        0.09080938446651277
+      ],
+      "qloss_path_mean": 0.009815137347844281,
+      "qloss_all_mean": 0.02089473109714104
+    },
+    "tabela_A1": {
+      "params": {
+        "memory": 0,
+        "delta": 0.0,
+        "alpha": 0.25,
+        "beta": 0.0001
+      },
+      "fonte": "Calvano, Apêndice, Tabela A1 (Pesquisa 1)",
+      "n_sessions": 1000,
+      "n_converged": 1000,
+      "seconds": 4.76259170000003,
+      "periods_mean": 172759.669,
+      "periods_min": 147220,
+      "periods_max": 252110,
+      "delta_mean": 0.17457880533119374,
+      "delta_sd": 0.15853318728263074,
+      "delta_ci95_t": [
+        0.16474107823060208,
+        0.1844165324317854
+      ],
+      "delta_median": 0.1789309019578493,
+      "delta_iqr": [
+        0.04130474137875706,
+        0.3101210310502516
+      ],
+      "share_delta_gt_05": 0.022,
+      "share_delta_lt_0": 0.18,
+      "share_cycle": 0.0,
+      "price_mean": 1.5242606500976055,
+      "price_pct_over_nash": 3.485169456157111,
+      "nash_share": 0.302,
+      "nash_share_wilson95": [
+        0.2743452451592359,
+        0.3311702066809748
+      ],
+      "qloss_path_mean": 0.00725379232387606,
+      "qloss_all_mean": 0.00725379232387606
+    }
+  },
+  "versions": {
+    "python": "3.11.0",
+    "numpy": "2.4.6",
+    "numba": "0.68.0",
+    "scipy": "1.17.1",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "numba_threads": 8
+}
