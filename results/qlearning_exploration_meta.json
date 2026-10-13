@@ -1,0 +1,208 @@
+{
+  "description": "Sensibilidade à exploração, Q-learning, sementes 1 a 1000",
+  "fixed": {
+    "n": 2,
+    "a": 2.0,
+    "a0": 0.0,
+    "mu": 0.25,
+    "c": 1.0,
+    "delta": 0.95,
+    "alpha": 0.15,
+    "m": 15,
+    "xi": 0.1,
+    "k": 1,
+    "t_stable": 100000,
+    "t_max": 1000000000
+  },
+  "method": {
+    "delta_index": "ciclo-limite (Q congelada, ε = 0)",
+    "best_response": "leitura de Calvano (desvio de um período), como na parte 1",
+    "deviation": "teste de desvio comum da Fase 1.4; classes com θ = 2%"
+  },
+  "by_beta": {
+    "1e-05": {
+      "date": "2026-10-13T17:18:49",
+      "beta": 1e-05,
+      "n_sessions": 1000,
+      "n_converged": 1000,
+      "seconds": 38.704342500000166,
+      "eps_at_mean_convergence": 6.701229486236045e-05,
+      "periods_mean": 961063.445,
+      "periods_min": 606043,
+      "periods_max": 1403385,
+      "delta_mean": 0.8367149049689795,
+      "delta_sd": 0.11041006826231392,
+      "delta_ci95": [
+        0.8298716180394373,
+        0.8435581918985217
+      ],
+      "delta_median": 0.8522659129460235,
+      "share_delta_gt_05": 0.998,
+      "share_cycle": 0.586,
+      "price_pct_over_nash": 21.618253829739253,
+      "nash_share": 0.204,
+      "nash_share_wilson95": [
+        0.18017859900704303,
+        0.23008692495610017
+      ],
+      "qloss_path_mean": 0.004742060040226145,
+      "qloss_all_mean": 0.020893644831104456,
+      "R_mean": -0.11409977861155451,
+      "G_mean": -0.0445294689322419,
+      "share_G_lt_0": 0.928,
+      "share_G_lt_0_wilson95": [
+        0.9102878591617453,
+        0.9424363156483045
+      ],
+      "V_mean_uncensored": 5.699741052436882,
+      "classes": {
+        "A": 858,
+        "B": 16,
+        "C": 78,
+        "outro": 48
+      },
+      "checks_vs_previous_phases": {}
+    },
+    "4e-06": {
+      "date": "2026-10-13T17:20:12",
+      "beta": 4e-06,
+      "n_sessions": 1000,
+      "n_converged": 1000,
+      "seconds": 77.20329039999979,
+      "eps_at_mean_convergence": 0.0005558126683025047,
+      "periods_mean": 1873769.812,
+      "periods_min": 1165667,
+      "periods_max": 3179167,
+      "delta_mean": 0.849348000076128,
+      "delta_sd": 0.11411614939582072,
+      "delta_ci95": [
+        0.8422750078581107,
+        0.8564209922941453
+      ],
+      "delta_median": 0.8675865940474076,
+      "share_delta_gt_05": 0.995,
+      "share_cycle": 0.388,
+      "price_pct_over_nash": 21.711616231875585,
+      "nash_share": 0.492,
+      "nash_share_wilson95": [
+        0.46110359363184095,
+        0.5229576367455414
+      ],
+      "qloss_path_mean": 0.001781971876414981,
+      "qloss_all_mean": 0.018065556774204464,
+      "R_mean": -0.12460600720204718,
+      "G_mean": -0.05239510897307625,
+      "share_G_lt_0": 0.96,
+      "share_G_lt_0_wilson95": [
+        0.9459900625744302,
+        0.9704891907260906
+      ],
+      "V_mean_uncensored": 5.841383022934227,
+      "classes": {
+        "A": 903,
+        "B": 4,
+        "C": 78,
+        "outro": 15
+      },
+      "checks_vs_previous_phases": {
+        "Δ (Fase 1.3)": true,
+        "Nash no caminho (Fase 1.5, parte 1)": true,
+        "G (Fase 1.4)": true
+      }
+    },
+    "2e-06": {
+      "date": "2026-10-13T17:22:38",
+      "beta": 2e-06,
+      "n_sessions": 1000,
+      "n_converged": 1000,
+      "seconds": 139.9127741000002,
+      "eps_at_mean_convergence": 0.0012863857153014178,
+      "periods_mean": 3327959.382,
+      "periods_min": 1952385,
+      "periods_max": 5619082,
+      "delta_mean": 0.8060249266033361,
+      "delta_sd": 0.12421299916707379,
+      "delta_ci95": [
+        0.7983261251529126,
+        0.8137237280537597
+      ],
+      "delta_median": 0.8238836210747609,
+      "share_delta_gt_05": 0.986,
+      "share_cycle": 0.248,
+      "price_pct_over_nash": 19.728343400735525,
+      "nash_share": 0.714,
+      "nash_share_wilson95": [
+        0.6852143011615499,
+        0.741147786243475
+      ],
+      "qloss_path_mean": 0.0006637778686757376,
+      "qloss_all_mean": 0.01650156085792666,
+      "R_mean": -0.12764400058602823,
+      "G_mean": -0.05369109622078484,
+      "share_G_lt_0": 0.987,
+      "share_G_lt_0_wilson95": [
+        0.9778853478989854,
+        0.9923872528778702
+      ],
+      "V_mean_uncensored": 5.413543754175017,
+      "classes": {
+        "A": 951,
+        "B": 2,
+        "C": 44,
+        "outro": 3
+      },
+      "checks_vs_previous_phases": {}
+    },
+    "1e-06": {
+      "date": "2026-10-13T17:27:00",
+      "beta": 1e-06,
+      "n_sessions": 1000,
+      "n_converged": 1000,
+      "seconds": 256.5708443000003,
+      "eps_at_mean_convergence": 0.0020732922939704266,
+      "periods_mean": 6178617.455,
+      "periods_min": 3498402,
+      "periods_max": 11020892,
+      "delta_mean": 0.7418102054962218,
+      "delta_sd": 0.12438653750695519,
+      "delta_ci95": [
+        0.7341006480280565,
+        0.749519762964387
+      ],
+      "delta_median": 0.7474845243612063,
+      "share_delta_gt_05": 0.955,
+      "share_cycle": 0.142,
+      "price_pct_over_nash": 17.156074382764032,
+      "nash_share": 0.798,
+      "nash_share_wilson95": [
+        0.7719963323687683,
+        0.8217228360737431
+      ],
+      "qloss_path_mean": 0.0003120872817424665,
+      "qloss_all_mean": 0.015576237389296185,
+      "R_mean": -0.11780676199774492,
+      "G_mean": -0.04918389889571574,
+      "share_G_lt_0": 0.982,
+      "share_G_lt_0_wilson95": [
+        0.9717265156214581,
+        0.9885843541412616
+      ],
+      "V_mean_uncensored": 5.213583333333334,
+      "classes": {
+        "A": 948,
+        "B": 0,
+        "C": 48,
+        "outro": 4
+      },
+      "checks_vs_previous_phases": {}
+    }
+  },
+  "versions": {
+    "python": "3.11.0",
+    "numpy": "2.4.6",
+    "numba": "0.68.0",
+    "scipy": "1.17.1",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "numba_threads": 8
+}

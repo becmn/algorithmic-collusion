@@ -11,6 +11,9 @@ Sessão genérica com memória k = 0 ou k = 1. Com k = 1, é a mesma conta de se
 Estado: k = 1 → s = a1 * m + a2 (225 estados); k = 0 → s = 0 (1 estado).
 Também calcula o teste de melhor resposta na leitura de Calvano (ver best_response.py),
 para comparar o controle da Tabela A1 com a fração em Nash 0,273 e o Q-loss 0,013.
+Fase 1.5, parte 3: a sessão ganhou eps_min (piso de exploração, 0 = regra da Ficha) e passou
+a devolver a Q final, e run_many_mem_diag serve ao diagnóstico do controle sem memória;
+com eps_min = 0, os resultados da parte 2 não mudam.
 Código próprio do projeto; a sessão segue session.py (adaptado de Courthoud, MIT).
 """
 
@@ -63,10 +66,11 @@ def cycle_actions(greedy, s_start, m, memory):
 
 @njit(cache=True)
 def run_session_mem(seed, PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi_mon,
-                    memory):
+                    memory, eps_min):
     """Uma sessão até convergir (estratégia gulosa igual por t_stable períodos) ou t_max.
+    ε = max(e^(−βt), eps_min); eps_min = 0 é a regra da Ficha (usado só no diagnóstico).
     Devolve: convergiu, períodos, Δ, tamanho do ciclo, preço médio (índice), estratégia
-    gulosa final e estado final."""
+    gulosa final, estado final e Q final."""
     np.random.seed(seed)
     m = PI.shape[0]
     S = Q0.shape[1]
@@ -86,7 +90,7 @@ def run_session_mem(seed, PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, 
     converged = False
     act = np.empty(2, dtype=np.int64)
     while t < t_max:
-        eps = np.exp(-beta * t)
+        eps = max(np.exp(-beta * t), eps_min)
         for i in range(2):
             if np.random.random() < eps:
                 act[i] = np.random.randint(0, m)
@@ -127,7 +131,7 @@ def run_session_mem(seed, PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, 
         n = 0
         pbar = ring.mean()
         pidx = -1.0
-    return converged, t, (pbar - pi_nash) / (pi_mon - pi_nash), n, pidx, greedy, s
+    return converged, t, (pbar - pi_nash) / (pi_mon - pi_nash), n, pidx, greedy, s, Q
 
 
 @njit(cache=True)
@@ -201,8 +205,8 @@ def run_many_mem(seeds, PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi
     qlp = np.full(n, np.nan)
     qla = np.full(n, np.nan)
     for k in prange(n):
-        ok, t, d, nc, pi_, greedy, s_end = run_session_mem(
-            seeds[k], PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi_mon, memory)
+        ok, t, d, nc, pi_, greedy, s_end, Q = run_session_mem(
+            seeds[k], PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi_mon, memory, 0.0)
         conv[k] = ok
         periods[k] = t
         dlt[k] = d
@@ -218,3 +222,60 @@ def run_many_mem(seeds, PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi
             qlp[k] = lp
             qla[k] = la
     return conv, periods, dlt, clen, pidx, p1, p2, nash, qlp, qla
+
+
+@njit(parallel=True, cache=True)
+def run_many_mem_diag(seeds, PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi_mon,
+                      memory, eps_min):
+    """Diagnóstico (Fase 1.5, parte 3). Por sessão: convergiu, períodos, Δ do ciclo-limite
+    da estratégia gulosa no momento em que a sessão parou (igual ao Δ usual se convergiu),
+    preços finais e, com memória 0 e preço constante, as notas que explicam por que o
+    agente não corta o preço:
+      q_play[i]  = Q aprendida do preço jogado;  q_fix[i] = π(jogado)/(1 − δ);
+      q_br[i]    = Q aprendida da melhor resposta estática ao preço do rival;
+      v_br[i]    = valor verdadeiro de cortar 1 vez para ela: π(MR) + δ · Q aprendida do jogado."""
+    n = seeds.shape[0]
+    m = PI.shape[0]
+    conv = np.zeros(n, dtype=np.bool_)
+    periods = np.zeros(n, dtype=np.int64)
+    dg = np.zeros(n)
+    clen = np.zeros(n, dtype=np.int64)
+    p1 = np.full(n, -1, dtype=np.int64)
+    p2 = np.full(n, -1, dtype=np.int64)
+    q_play = np.full((n, 2), np.nan)
+    q_fix = np.full((n, 2), np.nan)
+    q_br = np.full((n, 2), np.nan)
+    v_br = np.full((n, 2), np.nan)
+    for k in prange(n):
+        ok, t, d, nc, pi_, greedy, s_end, Q = run_session_mem(
+            seeds[k], PI, Q0, alpha, delta, beta, t_stable, t_max, pi_nash, pi_mon,
+            memory, eps_min)
+        conv[k] = ok
+        periods[k] = t
+        cyc, acts = cycle_actions(greedy, s_end, m, memory)
+        L = cyc.shape[0]
+        clen[k] = L
+        pbar = 0.0
+        for j in range(L):
+            pbar += 0.5 * (PI[acts[j, 0], acts[j, 1], 0] + PI[acts[j, 0], acts[j, 1], 1])
+        dg[k] = (pbar / L - pi_nash) / (pi_mon - pi_nash)
+        if L == 1:
+            p1[k] = acts[0, 0]
+            p2[k] = acts[0, 1]
+            if memory == 0:
+                for i in range(2):
+                    a = acts[0, i]
+                    b = acts[0, 1 - i]
+                    br = 0
+                    best = -1.0
+                    for x in range(m):
+                        r = PI[x, b, 0] if i == 0 else PI[b, x, 1]
+                        if r > best:
+                            best = r
+                            br = x
+                    r_play = PI[a, b, 0] if i == 0 else PI[b, a, 1]
+                    q_play[k, i] = Q[i, 0, a]
+                    q_fix[k, i] = r_play / (1.0 - delta)
+                    q_br[k, i] = Q[i, 0, br]
+                    v_br[k, i] = best + delta * Q[i, 0, a]
+    return conv, periods, dg, clen, p1, p2, q_play, q_fix, q_br, v_br

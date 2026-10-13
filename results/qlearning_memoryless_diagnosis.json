@@ -1,0 +1,189 @@
+{
+  "description": "Diagnóstico do controle sem memória com δ = 0,95, sementes 1 a 1000",
+  "params": {
+    "memory": 0,
+    "alpha": 0.15,
+    "beta": 4e-06,
+    "t_stable": 100000,
+    "t_max": 1000000000
+  },
+  "blocks": {
+    "q0": {
+      "date": "2026-10-13T17:31:08",
+      "eq8": {
+        "delta_mean": 0.9565662294937965,
+        "delta_sd": 0.04459641780736008,
+        "delta_ci95": [
+          0.9538021148809839,
+          0.9593303441066092
+        ],
+        "delta_median": 0.9685979680168119,
+        "share_converged": 1.0,
+        "periods_mean": 1941271.788,
+        "seconds": 76.81052269999964,
+        "same_as_part_2": true
+      },
+      "zero": {
+        "delta_mean": 0.9562457879309477,
+        "delta_sd": 0.044755048701979806,
+        "delta_ci95": [
+          0.9534718412734233,
+          0.9590197345884721
+        ],
+        "delta_median": 0.9685979680168119,
+        "share_converged": 1.0,
+        "periods_mean": 1941619.732,
+        "seconds": 79.09460840000065
+      },
+      "nash": {
+        "delta_mean": 0.9565550175250328,
+        "delta_sd": 0.044624386253157074,
+        "delta_ci95": [
+          0.9537891694099899,
+          0.9593208656400757
+        ],
+        "delta_median": 0.9685979680168119,
+        "share_converged": 1.0,
+        "periods_mean": 1941722.202,
+        "seconds": 74.73124330000064
+      }
+    },
+    "delta": {
+      "date": "2026-10-13T17:39:06",
+      "0.0": {
+        "delta_mean": 0.260269747222985,
+        "delta_sd": 0.20424250933624907,
+        "delta_ci95": [
+          0.24761066534218226,
+          0.27292882910378774
+        ],
+        "delta_median": 0.25095595992748576,
+        "share_converged": 1.0,
+        "periods_mean": 2013482.248,
+        "seconds": 84.4242422999996
+      },
+      "0.25": {
+        "delta_mean": 0.29830019057456936,
+        "delta_sd": 0.23533106121247996,
+        "delta_ci95": [
+          0.28371422028529686,
+          0.31288616086384186
+        ],
+        "delta_median": 0.25095595992748576,
+        "share_converged": 1.0,
+        "periods_mean": 1982465.318,
+        "seconds": 85.84575359999963
+      },
+      "0.5": {
+        "delta_mean": 0.34106136395972725,
+        "delta_sd": 0.2882343457628724,
+        "delta_ci95": [
+          0.3231964141227433,
+          0.3589263137967112
+        ],
+        "delta_median": 0.35694491551844265,
+        "share_converged": 1.0,
+        "periods_mean": 1967034.491,
+        "seconds": 77.2623294999994
+      },
+      "0.75": {
+        "delta_mean": 0.5271038014369265,
+        "delta_sd": 0.34800639186462645,
+        "delta_ci95": [
+          0.505534141800576,
+          0.548673461073277
+        ],
+        "delta_median": 0.6538149361766092,
+        "share_converged": 1.0,
+        "periods_mean": 1957439.726,
+        "seconds": 76.05037970000012
+      },
+      "0.9": {
+        "delta_mean": 0.9151286987824595,
+        "delta_sd": 0.09248135897403718,
+        "delta_ci95": [
+          0.9093966447673335,
+          0.9208607527975855
+        ],
+        "delta_median": 0.9262500294506304,
+        "share_converged": 1.0,
+        "periods_mean": 1987122.691,
+        "seconds": 73.61913259999983
+      },
+      "0.95": {
+        "delta_mean": 0.9565662294937965,
+        "delta_sd": 0.04459641780736008,
+        "delta_ci95": [
+          0.9538021148809839,
+          0.9593303441066092
+        ],
+        "delta_median": 0.9685979680168119,
+        "share_converged": 1.0,
+        "periods_mean": 1941271.788,
+        "seconds": 75.43574129999979
+      }
+    },
+    "mecanismo": {
+      "date": "2026-10-13T17:40:22",
+      "n_sessions_constant_price": 1000,
+      "share_firms_played_note_within_0.1pct": 0.9565,
+      "share_firms_br_true_value_above_played": 1.0,
+      "share_firms_br_note_below_played": 1.0,
+      "share_firms_stale_pattern": 1.0,
+      "share_sessions_stale_both_firms": 1.0,
+      "br_note_gap_pct_mean": 2.9891093812866925,
+      "true_gain_pct_mean": 0.8177604094019251,
+      "eps_end_mean": 0.00045686097641289207,
+      "periods_between_tests_of_one_price_mean": 38410.0573029213,
+      "seconds": 70.83193449999999
+    },
+    "epsmin": {
+      "date": "2026-10-13T17:48:10",
+      "t_max": 4000000,
+      "0.001": {
+        "delta_mean": 0.956971895294098,
+        "delta_sd": 0.054158270968920966,
+        "delta_ci95": [
+          0.95361513088229,
+          0.960328659705906
+        ],
+        "delta_median": 0.9685979680168119,
+        "share_converged": 0.0,
+        "periods_mean": 4000000.0,
+        "seconds": 143.2667174999997
+      },
+      "0.01": {
+        "delta_mean": 0.9234179801142484,
+        "delta_sd": 0.12356210664630372,
+        "delta_ci95": [
+          0.9157595214002258,
+          0.931076438828271
+        ],
+        "delta_median": 0.9685979680168119,
+        "share_converged": 0.0,
+        "periods_mean": 4000000.0,
+        "seconds": 159.39730190000046
+      },
+      "0.05": {
+        "delta_mean": 0.7965324664195834,
+        "delta_sd": 0.2650917277654531,
+        "delta_ci95": [
+          0.7801019109068641,
+          0.8129630219323027
+        ],
+        "delta_median": 0.9262500294506304,
+        "share_converged": 0.0,
+        "periods_mean": 4000000.0,
+        "seconds": 159.15462769999976
+      }
+    }
+  },
+  "versions": {
+    "python": "3.11.0",
+    "numpy": "2.4.6",
+    "numba": "0.68.0",
+    "scipy": "1.17.1",
+    "platform": "Windows-10-10.0.26200-SP0"
+  },
+  "numba_threads": 8
+}
