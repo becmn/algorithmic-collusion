@@ -27,7 +27,6 @@ from session import limit_cycle, run_session
 
 T_DEV = 15      # períodos depois do desvio (τ = 1 a 15)
 RUN_LEN = 3     # períodos seguidos perto do controle para contar a volta (V)
-MAX_CYCLE = 225
 
 
 @njit(cache=True)

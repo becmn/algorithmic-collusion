@@ -11,6 +11,10 @@ Gera em paper/figures/ (PNG e PDF):
                                  e a curva R(τ) do rival, com IC de 95%
 Figuras em tons de cinza; as firmas se distinguem por estilo de linha e marcador, não por cor.
 Uso: python analysis/fig_trajectories_deviation.py
+Revisão de 16/10/2026: Δ de preços ao acaso calculado (analysis/common.py). A curva da direita
+da resposta ao desvio é p₂ com desvio(τ) / p₂ controle(τ) − 1 (coluna R_tau_* do CSV); ela NÃO é
+o R do Protocolo, que divide por p₂(0) (os dois só coincidem nas sessões de preço constante).
+Por isso o rótulo diz "relative to control" e a linha de θ, que vale para o R do Protocolo, saiu.
 """
 
 import csv
@@ -22,13 +26,15 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from common import delta_random_prices
+
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "results"
 FIG = ROOT / "paper" / "figures"
 FIG.mkdir(parents=True, exist_ok=True)
 
 base_meta = json.load(open(RES / "qlearning_base_meta.json", encoding="utf-8"))
-DELTA_RANDOM = 0.4974          # preços sorteados ao acaso na grade (Fase 1.1)
+DELTA_RANDOM = delta_random_prices()   # preços sorteados ao acaso na grade (0,4974; Fase 1.1)
 LLM_HORIZON = 300              # períodos por execução de LLM (Protocolo)
 
 
@@ -142,14 +148,12 @@ a1.legend(frameon=False, loc="lower right", fontsize=8.5, bbox_to_anchor=(1.0, 0
 
 r_mean, r_lo, r_hi = col("R_tau_mean"), col("R_tau_ci_lo"), col("R_tau_ci_hi")
 a2.fill_between(tau, 100 * r_lo, 100 * r_hi, color="0.8", lw=0, label="95% CI")
-a2.plot(tau, 100 * r_mean, color="black", lw=1.5, marker="o", ms=4, label="Mean R(τ)")
+a2.plot(tau, 100 * r_mean, color="black", lw=1.5, marker="o", ms=4, label="Mean over sessions")
 a2.axhline(0, color="0.3", lw=0.8)
-a2.axhline(-2, color="0.4", lw=0.8, ls=":")
-a2.text(15, -2, "θ = −2%", fontsize=8, color="0.3", va="top", ha="right")
 a2.set_xlabel("τ (deviation at τ = 1)")
-a2.set_ylabel("Rival price vs. control (%)")
+a2.set_ylabel("Rival price relative to control (%)")
 a2.set_xticks(range(0, 16, 3))
-a2.set_title("R(τ): rival's reaction, deviation − control", fontsize=10)
+a2.set_title("Rival's reaction: p₂ deviation / p₂ control − 1", fontsize=10)
 a2.legend(frameon=False, loc="lower right", fontsize=8.5)
 save(fig, "fig_deviation_response")
 

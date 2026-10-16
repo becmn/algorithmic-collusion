@@ -11,6 +11,8 @@ Componente oficial Δ × períodos (decisão de 10/10/2026): descritivo e explor
 fora da família confirmatória, sem afirmar causa.
 
 Uso: python analysis/fig_delta_base.py
+Revisão de 16/10/2026: IC de Wilson e Δ de preços ao acaso vêm de analysis/common.py;
+a conferência da média lê results/qlearning_base_meta.json em vez de um número digitado.
 """
 
 import csv
@@ -25,13 +27,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 
+from common import delta_random_prices
+from common import wilson as _wilson
+
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "results"
 FIG = ROOT / "paper" / "figures"
 FIG.mkdir(parents=True, exist_ok=True)
 
 DELTA_CALVANO = 0.849      # alvo, Tabela 1 de Calvano (Ficha de parâmetros)
-DELTA_RANDOM = 0.4974      # preços sorteados ao acaso na grade (Fase 1.1)
+DELTA_RANDOM = delta_random_prices()   # preços sorteados ao acaso na grade (0,4974; Fase 1.1)
 
 # ---------- leitura ----------
 rows = list(csv.DictReader(open(RES / "qlearning_base_sessions.csv", encoding="utf-8")))
@@ -41,13 +46,10 @@ cycle = np.array([int(r["cycle_len"]) > 1 for r in rows])
 n = len(delta)
 
 
-def wilson(k, n, z=1.959964):
-    """IC de Wilson (95%) para uma fração k/n."""
-    p = k / n
-    den = 1 + z**2 / n
-    c = (p + z**2 / (2 * n)) / den
-    h = z * math.sqrt(p * (1 - p) / n + z**2 / (4 * n**2)) / den
-    return [c - h, c + h]
+def wilson(k, n):
+    """IC de Wilson (95%) para uma fração k/n (analysis/common.py)."""
+    p, lo, hi = _wilson(k, n)
+    return [lo, hi]
 
 
 # ---------- números da distribuição ----------
@@ -192,7 +194,8 @@ for t in table:
 # ---------- conferências ----------
 checks = {
     "n_1000": n == 1000,
-    "media_igual_fase13": abs(dist["mean"] - 0.849348000076128) < 1e-9,
+    "media_igual_fase13": abs(dist["mean"] - json.load(open(RES / "qlearning_base_meta.json",
+                                                            encoding="utf-8"))["summary"]["delta_mean"]) < 1e-9,
     "soma_faixas_1000": sum(t["n"] for t in table[:5]) == 1000,
     "figuras_salvas": all((ROOT / p).exists() for p in meta["figures"]),
 }

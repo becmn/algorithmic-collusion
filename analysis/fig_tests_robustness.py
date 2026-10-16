@@ -4,8 +4,8 @@ Fase 1.6, parte 3: tabela e figuras dos testes obrigatórios da Fase 1.5, a part
 
 Plano de figuras do artigo (decisão de 13/10/2026):
   texto principal (máx. 4): (1) Δ por sessão/execução e agente; (2) trajetória de Δ com o
-  período 300; (3) resposta ao desvio e R(τ); (4) robustez do Q-learning (esta figura).
-  Os testes obrigatórios entram no texto principal também como tabela.
+  período 300; (3) resposta ao desvio; (4) teste de separação (Fase 1.8; revisão de 16/10/2026).
+  Esta figura de robustez foi para o apêndice; os testes obrigatórios ficam no texto como tabela.
 
 Gera:
   - results/qlearning_mandatory_tests_table.csv   uma linha por condição
@@ -14,6 +14,11 @@ Gera:
   - paper/figures/fig_memoryless_discount.png/.pdf apêndice: Δ sem memória por δ
   - results/qlearning_figures_part3_meta.json      números das figuras e conferências
 Uso: python analysis/fig_tests_robustness.py
+Revisão de 16/10/2026: a fração em Nash aparece nas duas leituras, rotuladas: desvios de 1 período
+(leitura de Calvano) e qualquer desvio (melhor resposta ótima; caso base e β lidos de
+results/qlearning_separation_sessions.csv, Fase 1.8). Nos três controles as duas coincidem por
+construção (k = 0 tem um estado só; com δ = 0 a continuação não pesa). IC de Wilson, IC t e Δ de
+preços ao acaso vêm de analysis/common.py; nenhuma conferência usa número digitado.
 """
 
 import csv
@@ -28,6 +33,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats
 
+from common import delta_random_prices, t_ci as _t_ci, t_ci_summary, wilson
+
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "results"
 FIG = ROOT / "paper" / "figures"
@@ -41,20 +48,8 @@ def read(name):
         return list(csv.DictReader(f))
 
 
-def t_ci(x):
-    x = np.asarray(x, dtype=float)
-    h = stats.t.ppf(0.975, len(x) - 1) * x.std(ddof=1) / math.sqrt(len(x))
-    return float(x.mean()), float(x.mean() - h), float(x.mean() + h)
-
-
-def wilson(k, n, z=1.959964):
-    p = k / n
-    den = 1 + z**2 / n
-    c = (p + z**2 / (2 * n)) / den
-    h = z * math.sqrt(p * (1 - p) / n + z**2 / (4 * n**2)) / den
-    lo = 0.0 if k == 0 else c - h      # com k = 0 ou k = n o limite é exato (evita erro de arredondamento)
-    hi = 1.0 if k == n else c + h
-    return p, lo, hi
+t_ci = _t_ci
+DELTA_RANDOM = delta_random_prices()
 
 
 truthy = lambda v: str(v).strip().lower() == "true"
@@ -62,6 +57,7 @@ truthy = lambda v: str(v).strip().lower() == "true"
 # ---------------------------------------------------------------- condições
 expl = read("qlearning_exploration_sessions.csv")
 ctrl = read("qlearning_controls_sessions.csv")
+sep = read("qlearning_separation_sessions.csv")      # Nash com qualquer desvio (Fase 1.8)
 conds = []   # (id, rótulo em inglês, linhas, tem teste de desvio, alvos de Calvano)
 for beta, lab in ((4e-6, "Base case (β = 4×10⁻⁶)"), (1e-5, "Shorter exploration (β = 10⁻⁵)"),
                   (2e-6, "Longer exploration (β = 2×10⁻⁶)"), (1e-6, "Longer exploration (β = 10⁻⁶)")):
@@ -70,7 +66,8 @@ for beta, lab in ((4e-6, "Base case (β = 4×10⁻⁶)"), (1e-5, "Shorter explor
     conds.append((f"beta_{beta:g}", lab, rows, True, tgt))
 for cid, lab, tgt in (("sem_memoria_d095", "No memory, δ = 0.95", {}),
                       ("memoria1_d0", "Memory 1, δ = 0 (myopic)", {}),
-                      ("tabela_A1", "Calvano Table A1 control (k = 0, δ = 0)", {"delta": 0.185, "nash": 0.273})):
+                      ("tabela_A1", "Calvano Table A1 control (k = 0, δ = 0, α = 0.25, β = 10⁻⁴)",
+                       {"delta": 0.185, "nash": 0.273})):
     rows = [r for r in ctrl if r["condition"] == cid]
     conds.append((cid, lab, rows, False, tgt))
 
@@ -80,11 +77,21 @@ for cid, lab, rows, has_dev, tgt in conds:
     d, dlo, dhi = t_ci([float(r["delta"]) for r in rows])
     kn = sum(truthy(r["nash_on_path_calvano"]) for r in rows)
     pn, pnlo, pnhi = wilson(kn, n)
+    if cid.startswith("beta_"):
+        srows = [r for r in sep if r["condition"] == f"k1_{cid.replace('_', '')}"]
+        assert len(srows) == n and all(abs(float(a["delta"]) - float(b_["delta"])) < 1e-12
+                                       for a, b_ in zip(sorted(srows, key=lambda r: int(r["seed"])),
+                                                        sorted(rows, key=lambda r: int(r["seed"]))))
+        ko = sum(truthy(r["nash_on_path_optimal"]) for r in srows)
+    else:
+        ko = kn          # controles: as duas leituras coincidem por construção
+    po, polo, pohi = wilson(ko, n)
     row = {"condition": cid, "label": lab, "n": n,
            "converged": sum(truthy(r["converged"]) for r in rows),
            "periods_mean_millions": round(np.mean([float(r["periods"]) for r in rows]) / 1e6, 3),
            "delta_mean": d, "delta_ci_lo": dlo, "delta_ci_hi": dhi,
            "nash_share": pn, "nash_ci_lo": pnlo, "nash_ci_hi": pnhi,
+           "nash_any_dev_share": po, "nash_any_dev_ci_lo": polo, "nash_any_dev_ci_hi": pohi,
            "unprofitable_share": None, "unprofitable_ci_lo": None, "unprofitable_ci_hi": None,
            "classA_share": None, "classA_ci_lo": None, "classA_ci_hi": None,
            "target_delta": tgt.get("delta"), "target_nash": tgt.get("nash"),
@@ -109,7 +116,8 @@ def fmt(x, nd=3):
 tex = [r"\begin{table}[t]", r"\centering\small",
        r"\caption{Mandatory tests for the Q-learning agents (1{,}000 sessions per row). "
        r"$\Delta$: mean with 95\% $t$ interval. Nash: share of sessions whose limit strategies are "
-       r"a Nash equilibrium on path (Calvano et al.'s one-period test). Unprofitable: share with "
+       r"a Nash equilibrium on path against one-period deviations (Calvano et al.'s test); in "
+       r"parentheses, against any deviation. Unprofitable: share with "
        r"discounted deviation gain $G<0$. Class A: punishment with return ($\theta = 2\%$). "
        r"Calvano et al.\ targets in brackets. Deviation test not run for the controls (--).}",
        r"\label{tab:mandatory-tests}",
@@ -121,7 +129,8 @@ for r in table:
     d = f"{r['delta_mean']:.3f} ({r['delta_ci_lo']:.3f}--{r['delta_ci_hi']:.3f})"   # IC entre parênteses; alvo entre colchetes
     if r["target_delta"] is not None:
         d += f" [{r['target_delta']:.3f}]"
-    nash = fmt(r["nash_share"]) + (f" [{r['target_nash']:.3f}]" if r["target_nash"] is not None else "")
+    nash = (fmt(r["nash_share"]) + (f" [{r['target_nash']:.3f}]" if r["target_nash"] is not None else "")
+            + f" ({r['nash_any_dev_share']:.3f})")
     unp = fmt(r["unprofitable_share"]) + (f" [{r['target_unprofitable']:.3f}]"
                                          if r["target_unprofitable"] is not None else "")
     tex.append(f"{lab} & {d} & {nash} & {unp} & {fmt(r['classA_share'])} \\\\")
@@ -143,13 +152,13 @@ for yi, r in zip(y, table):
     if r["target_delta"] is not None:
         a1.plot(r["target_delta"], yi, marker="|", color="0.4", ms=12, mew=1.5)
 a1.axvline(0, color="0.3", lw=0.8, ls="--")
-a1.axvline(0.4974, color="0.5", lw=0.8, ls=":")
-a1.text(0.4974, y.max() + 0.75, "random prices", fontsize=8, color="0.35", ha="center")
+a1.axvline(DELTA_RANDOM, color="0.5", lw=0.8, ls=":")
+a1.text(DELTA_RANDOM, y.max() + 0.75, "random prices", fontsize=8, color="0.35", ha="center")
 a1.text(0.01, y.max() + 0.75, "Nash", fontsize=8, color="0.3", ha="left")
 a1.set_xlim(-0.05, 1.12)
 a1.set_ylim(-0.6, y.max() + 1.1)
 a1.set_yticks(y)
-a1.set_yticklabels([r["label"] for r in table], fontsize=9)
+a1.set_yticklabels([r["label"].replace("control (", "control\n(") for r in table], fontsize=9)
 a1.set_xlabel("Profit gain Δ (mean, 95% CI)")
 a1.set_title("Prices above competitive levels", fontsize=10)
 a1.axhline(y[3] - 0.5, color="0.8", lw=0.8)
@@ -158,7 +167,9 @@ for yi, r in zip(y, table):
     a2.errorbar(r["nash_share"], yi + 0.15, xerr=[[r["nash_share"] - r["nash_ci_lo"]],
                                                   [r["nash_ci_hi"] - r["nash_share"]]],
                 fmt="o", color="black", ms=5, capsize=2,
-                label="Nash equilibrium on path" if yi == y[0] else None)
+                label="Nash on path, one-period deviations" if yi == y[0] else None)
+    a2.plot(r["nash_any_dev_share"], yi + 0.15, marker="^", color="black", mfc="0.8", ms=6,
+            ls="none", label="Nash on path, any deviation" if yi == y[0] else None)
     if r["classA_share"] is not None:
         a2.errorbar(r["classA_share"], yi - 0.15, xerr=[[r["classA_share"] - r["classA_ci_lo"]],
                                                         [r["classA_ci_hi"] - r["classA_share"]]],
@@ -198,9 +209,10 @@ pts = [get(diag["delta"], k) for k in deltas]
 mem1 = {0.0: next(r for r in table if r["condition"] == "memoria1_d0"),
         0.95: next(r for r in table if r["condition"] == "beta_4e-06")}
 fig, ax = plt.subplots(figsize=(6.5, 3.9))
+# IC t a partir de média, DP e n do diagnóstico (o JSON guarda IC normal; aqui fica igual ao resto)
+cis = [t_ci_summary(p["delta_mean"], p["delta_sd"], 1000) for p in pts]
 ax.errorbar(deltas, [p["delta_mean"] for p in pts],
-            yerr=[[p["delta_mean"] - p["delta_ci95"][0] for p in pts],
-                  [p["delta_ci95"][1] - p["delta_mean"] for p in pts]],
+            yerr=[[c[0] - c[1] for c in cis], [c[2] - c[0] for c in cis]],
             fmt="-o", color="black", ms=5, capsize=2, lw=1.3, label="No memory (k = 0)")
 ax.errorbar(list(mem1), [r["delta_mean"] for r in mem1.values()],
             yerr=[[r["delta_mean"] - r["delta_ci_lo"] for r in mem1.values()],
@@ -208,8 +220,8 @@ ax.errorbar(list(mem1), [r["delta_mean"] for r in mem1.values()],
             fmt="s", color="0.45", mfc="white", ms=6, capsize=2,
             label="One-period memory (k = 1): δ = 0 control and base case")
 ax.axhline(0, color="0.3", lw=0.8, ls="--")
-ax.axhline(0.4974, color="0.5", lw=0.8, ls=":")
-ax.text(0.01, 0.4974 + 0.015, "random prices", fontsize=8, color="0.35")
+ax.axhline(DELTA_RANDOM, color="0.5", lw=0.8, ls=":")
+ax.text(0.01, DELTA_RANDOM + 0.015, "random prices", fontsize=8, color="0.35")
 ax.set_xlabel("Discount factor δ")
 ax.set_ylabel("Profit gain Δ (mean, 95% CI)")
 ax.set_ylim(-0.05, 1.05)
@@ -234,7 +246,10 @@ checks = {
     "nao_lucrativo_base_igual_fase14": abs(b["unprofitable_share"]
                                            - dev_meta["share_unprofitable_G_lt_0"]) < 1e-12,
     "classe_A_base_igual_fase14": round(b["classA_share"] * 1000) == dev_meta["classes"]["theta_0.02"]["A"],
-    "nash_base_igual_fase15": abs(b["nash_share"] - 0.492) < 1e-12,
+    "nash_base_igual_fase15": abs(b["nash_share"] - json.load(open(RES / "qlearning_bestresponse_meta.json",
+        encoding="utf-8"))["summary"]["by_version"]["calvano"]["nash_share"]) < 1e-12,
+    "nash_qualquer_desvio_base_igual_fase15": abs(b["nash_any_dev_share"] - json.load(open(
+        RES / "qlearning_bestresponse_meta.json", encoding="utf-8"))["summary"]["by_version"]["otima"]["nash_share"]) < 1e-12,
     "controles_iguais_fase15": all(abs(next(r for r in table if r["condition"] == c)["delta_mean"]
                                        - ctrl_meta[c]["delta_mean"]) < 1e-9
                                    for c in ("sem_memoria_d095", "memoria1_d0", "tabela_A1")),
@@ -244,14 +259,15 @@ checks = {
 meta = {"description": "Fase 1.6, parte 3: tabela e figuras dos testes obrigatórios (Fase 1.5)",
         "date": datetime.now().isoformat(timespec="seconds"),
         "sources": ["results/qlearning_exploration_sessions.csv",
+                    "results/qlearning_separation_sessions.csv",
                     "results/qlearning_controls_sessions.csv",
                     "results/qlearning_memoryless_diagnosis.json"],
         "article_plan": {"main": ["fig_delta_distribution (vira Δ por agente na Fase 4)",
                                   "fig_learning_trajectory", "fig_deviation_response",
-                                  "fig_robustness_tests"],
-                         "main_tables": ["table_mandatory_tests"],
-                         "appendix": ["fig_delta_vs_periods", "fig_price_trajectories",
-                                      "fig_memoryless_discount"]},
+                                  "fig_separation (revisão de 16/10/2026)"],
+                         "main_tables": ["table_mandatory_tests", "table_separation"],
+                         "appendix": ["fig_robustness_tests", "fig_delta_vs_periods",
+                                      "fig_price_trajectories", "fig_memoryless_discount"]},
         "table": table, "figures": saved, "checks": checks}
 with open(RES / "qlearning_figures_part3_meta.json", "w", encoding="utf-8") as f:
     json.dump(meta, f, ensure_ascii=False, indent=2)
