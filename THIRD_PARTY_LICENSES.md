@@ -25,3 +25,9 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+## Fontes do simulador (docs/fonts/)
+
+- **Newsreader** — Copyright 2020 The Newsreader Project Authors (https://github.com/productiontype/Newsreader). SIL Open Font License 1.1; texto completo em `docs/fonts/OFL-Newsreader.txt`.
+- **Public Sans** — Copyright 2015 The Public Sans Project Authors (https://github.com/uswds/public-sans). SIL Open Font License 1.1; texto completo em `docs/fonts/OFL-PublicSans.txt`.
+- Arquivos .woff2 obtidos dos pacotes @fontsource-variable/newsreader e @fontsource-variable/public-sans (versão 5.3.0), sem modificação.

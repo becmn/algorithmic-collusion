@@ -6,6 +6,7 @@
   <title>Preços algorítmicos · simulador de Q-learning</title>
   <meta name="description" content="Simulador no navegador: dois algoritmos de preço que nunca se comunicaram aprendem a cobrar acima do preço competitivo.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/newsreader-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Dois algoritmos de preço que nunca se comunicaram aprenderam a cobrar acima do preço competitivo">
@@ -15,7 +16,8 @@
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <!-- Simulador do Projeto B (Fase 2.2). Textos em js/i18n.js; desenho e controles em js/app.js. -->
+  <!-- Simulador do Projeto B (Fase 2.2, direção visual A "Caderno de economia").
+       Textos em js/i18n.js; desenho e controles em js/app.js. -->
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip_link">Pular para o conteúdo</a>
@@ -26,6 +28,7 @@
       <span class="site-name" data-i18n="site_name">Preços algorítmicos</span>
       <nav class="topnav">
         <a href="#deviation" data-i18n="nav_deviation">Teste do desvio</a>
+        <a href="#results" data-i18n="nav_results">Resultados</a>
         <a href="#method" data-i18n="nav_method">Método</a>
         <a href="https://github.com/becmn/algorithmic-collusion" rel="noopener" data-i18n="nav_code">Código</a>
         <button type="button" id="lang-btn" class="lang-btn" data-i18n-attr="aria-label:lang_switch_aria">
@@ -37,15 +40,23 @@
 
   <main id="main" class="wrap">
     <!-- Bloco 2: resultado -->
-    <section class="hero" aria-labelledby="title">
-      <p class="kicker" data-i18n="kicker"></p>
-      <h1 id="title" data-i18n="title"></h1>
-      <p class="subtitle" data-i18n="subtitle"></p>
+    <section class="grid hero" aria-labelledby="title">
+      <div class="col-main-wide">
+        <p class="kicker" data-i18n="kicker"></p>
+        <h1 id="title" data-i18n="title"></h1>
+        <p class="dek" data-i18n="dek"></p>
+      </div>
+      <aside class="col-side byline">
+        <p><strong data-i18n="author_name"></strong><br><span data-i18n="author_affil"></span></p>
+        <p id="author-updated"></p>
+      </aside>
+    </section>
 
-      <div class="hero-grid">
-        <figure class="chart-card">
-          <figcaption class="chart-head">
-            <span class="chart-title" id="learn-title" data-i18n="chart_learning_title"></span>
+    <section class="grid rule-top hero-data" aria-labelledby="learn-title">
+      <div class="col-main">
+        <figure class="figure">
+          <figcaption class="figcap">
+            <strong data-i18n="fig_1"></strong> <span id="learn-title" data-i18n="chart_learning_title"></span>
             <span class="badge" data-i18n="badge_paper"></span>
           </figcaption>
           <div class="legend" aria-hidden="true">
@@ -54,133 +65,167 @@
           </div>
           <div id="learn-chart" class="chart" role="img" aria-labelledby="learn-title" aria-describedby="learn-desc"></div>
           <p id="learn-desc" class="visually-hidden" data-i18n="chart_learning_desc"></p>
-          <p class="note" data-i18n="chart_learning_note"></p>
+          <p class="note"><span data-i18n="subtitle"></span> <span data-i18n="chart_learning_note"></span></p>
           <details class="data-table">
             <summary data-i18n="data_table_summary"></summary>
             <div id="learn-table" class="table-scroll"></div>
           </details>
         </figure>
-
-        <aside class="side" aria-label="Δ">
-          <p class="delta-label" data-i18n="delta_label"></p>
-          <p class="delta-value"><span>Δ =</span> <output id="delta-value">–</output></p>
-          <p class="delta-when" id="delta-when"></p>
-          <div class="meter" aria-hidden="true"><div class="meter-fill" id="meter-fill"></div></div>
-          <p class="delta-scale" data-i18n="delta_scale"></p>
-          <p class="source" id="source-line"></p>
-          <p class="status" id="status" role="status" aria-live="polite"></p>
-          <p class="outcome" id="outcome"></p>
-        </aside>
+        <div class="controls" role="group" data-i18n-attr="aria-label:controls_label">
+          <button type="button" id="btn-run" class="btn btn-primary"></button>
+          <button type="button" id="btn-deviate" class="btn" aria-describedby="deviate-hint"></button>
+          <button type="button" id="btn-new" class="btn btn-link"></button>
+          <span id="deviate-hint" class="hint"></span>
+        </div>
       </div>
 
-      <div class="controls" role="group" data-i18n-attr="aria-label:controls_label">
-        <button type="button" id="btn-run" class="btn btn-primary"></button>
-        <button type="button" id="btn-deviate" class="btn" aria-describedby="deviate-hint"></button>
-        <button type="button" id="btn-new" class="btn"></button>
-        <span id="deviate-hint" class="hint"></span>
-      </div>
-
-      <p class="aggregate" id="aggregate"></p>
+      <aside class="col-side side" aria-label="Δ">
+        <p class="delta-label" data-i18n="delta_label"></p>
+        <p class="delta-value"><output id="delta-value">–</output></p>
+        <p class="delta-when" id="delta-when"></p>
+        <div class="meter" aria-hidden="true"><div class="meter-fill" id="meter-fill"></div></div>
+        <p class="delta-scale" data-i18n="delta_scale"></p>
+        <p class="source" id="source-line"></p>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+        <p class="outcome" id="outcome"></p>
+        <p class="aggregate" id="aggregate"></p>
+      </aside>
     </section>
 
     <!-- Bloco 3: teste do desvio -->
-    <section id="deviation" class="block" aria-labelledby="dev-h2" tabindex="-1">
-      <h2 id="dev-h2" data-i18n="dev_h2"></h2>
-      <p data-i18n="dev_intro"></p>
-      <p class="note" id="dev-cycle-note" hidden data-i18n="dev_cycle_note"></p>
+    <section id="deviation" class="grid rule-top block" aria-labelledby="dev-h2" tabindex="-1">
+      <div class="col-main">
+        <h2 id="dev-h2" data-i18n="dev_h2"></h2>
+        <p data-i18n="dev_intro"></p>
+        <p class="note" id="dev-cycle-note" hidden data-i18n="dev_cycle_note"></p>
+        <figure class="figure">
+          <figcaption class="figcap"><strong data-i18n="fig_2"></strong> <span id="dev-title" data-i18n="chart_dev_title"></span></figcaption>
+          <div class="legend" aria-hidden="true">
+            <span class="lg"><span class="key key-a"></span> <span data-i18n="firm_a"></span></span>
+            <span class="lg"><span class="key key-b"></span> <span data-i18n="firm_b"></span></span>
+            <span class="lg"><span class="key key-ctrl"></span> <span data-i18n="line_control"></span></span>
+          </div>
+          <div id="dev-chart" class="chart" role="img" aria-labelledby="dev-title" aria-describedby="dev-desc"></div>
+          <p id="dev-desc" class="visually-hidden" data-i18n="chart_dev_desc"></p>
+        </figure>
+        <p class="verdict" id="verdict"></p>
+        <p id="dev-aggregate"></p>
+        <p class="caveat" id="dev-caveat"></p>
+      </div>
+      <aside class="col-side side">
+        <dl class="scoreboard">
+          <div><dt data-i18n="score_react"></dt><dd id="score-react">–</dd></div>
+          <div><dt data-i18n="score_back"></dt><dd id="score-back">–</dd></div>
+          <div><dt data-i18n="score_profit"></dt><dd id="score-profit">–</dd></div>
+        </dl>
+      </aside>
+    </section>
 
-      <figure class="chart-card">
-        <figcaption class="chart-head"><span class="chart-title" id="dev-title" data-i18n="chart_dev_title"></span></figcaption>
-        <div class="legend" aria-hidden="true">
-          <span class="lg"><span class="key key-a"></span> <span data-i18n="firm_a"></span></span>
-          <span class="lg"><span class="key key-b"></span> <span data-i18n="firm_b"></span></span>
-          <span class="lg"><span class="key key-ctrl"></span> <span data-i18n="line_control"></span></span>
-        </div>
-        <div id="dev-chart" class="chart" role="img" aria-labelledby="dev-title" aria-describedby="dev-desc"></div>
-        <p id="dev-desc" class="visually-hidden" data-i18n="chart_dev_desc"></p>
-      </figure>
+    <section class="grid rule-top block" aria-labelledby="sep-h2">
+      <div class="col-main">
+        <h2 id="sep-h2" data-i18n="sep_h3"></h2>
+        <p id="sep-text"></p>
+        <figure class="figure">
+          <figcaption class="figcap"><strong data-i18n="fig_3"></strong> <span id="sep-title" data-i18n="chart_sep_title"></span></figcaption>
+          <div class="legend" aria-hidden="true">
+            <span class="lg"><span class="key key-dot-with"></span> <span data-i18n="sep_with"></span></span>
+            <span class="lg"><span class="key key-dot-without"></span> <span data-i18n="sep_without"></span></span>
+          </div>
+          <div id="sep-chart" class="chart" role="img" aria-labelledby="sep-title" aria-describedby="sep-desc"></div>
+          <p id="sep-desc" class="visually-hidden" data-i18n="chart_sep_desc"></p>
+          <details class="data-table">
+            <summary data-i18n="data_table_summary"></summary>
+            <div id="sep-table" class="table-scroll"></div>
+          </details>
+        </figure>
+        <p class="note" data-i18n="sep_note"></p>
+      </div>
+      <aside class="col-side side">
+        <p class="pullquote" data-i18n="sep_conclusion"></p>
+        <p class="note" data-i18n="sep_rule_note"></p>
+      </aside>
+    </section>
 
-      <dl class="scoreboard">
-        <div><dt data-i18n="score_react"></dt><dd id="score-react">–</dd></div>
-        <div><dt data-i18n="score_back"></dt><dd id="score-back">–</dd></div>
-        <div><dt data-i18n="score_profit"></dt><dd id="score-profit">–</dd></div>
-      </dl>
-      <p class="verdict" id="verdict"></p>
-      <p id="dev-aggregate"></p>
-      <p class="caveat" id="dev-caveat"></p>
-
-      <h3 data-i18n="sep_h3"></h3>
-      <p id="sep-text"></p>
-      <figure class="chart-card">
-        <figcaption class="chart-head"><span class="chart-title" id="sep-title" data-i18n="chart_sep_title"></span></figcaption>
-        <div class="legend" aria-hidden="true">
-          <span class="lg"><span class="key key-dot-with"></span> <span data-i18n="sep_with"></span></span>
-          <span class="lg"><span class="key key-dot-without"></span> <span data-i18n="sep_without"></span></span>
-        </div>
-        <div id="sep-chart" class="chart" role="img" aria-labelledby="sep-title" aria-describedby="sep-desc"></div>
-        <p id="sep-desc" class="visually-hidden" data-i18n="chart_sep_desc"></p>
-        <details class="data-table">
-          <summary data-i18n="data_table_summary"></summary>
-          <div id="sep-table" class="table-scroll"></div>
-        </details>
-      </figure>
-      <p class="note" data-i18n="sep_note"></p>
-      <p class="conclusion" data-i18n="sep_conclusion"></p>
+    <!-- Resultados principais × artigo original -->
+    <section id="results" class="grid rule-top block" aria-labelledby="tab1-h2" tabindex="-1">
+      <div class="col-main">
+        <h2 id="tab1-h2" data-i18n="tab1_h2"></h2>
+        <div class="table-scroll"><table class="results" id="tab1"></table></div>
+      </div>
+      <aside class="col-side side">
+        <p class="note" id="tab1-note"></p>
+      </aside>
     </section>
 
     <!-- Bloco 6: por que isso importa -->
-    <section class="block" aria-labelledby="why-h2">
-      <h2 id="why-h2" data-i18n="why_h2"></h2>
-      <p data-i18n="why_p1"></p>
-      <p data-i18n="why_p2"></p>
-      <div class="table-scroll">
-        <table class="compare">
-          <caption data-i18n="why_table_caption"></caption>
-          <thead>
-            <tr><td></td><th scope="col" data-i18n="why_col_tacit"></th><th scope="col" data-i18n="why_col_hub"></th></tr>
-          </thead>
-          <tbody>
-            <tr><th scope="row" data-i18n="why_row_how"></th><td data-i18n="why_how_tacit" data-i18n-attr="data-label:why_col_tacit"></td><td data-i18n="why_how_hub" data-i18n-attr="data-label:why_col_hub"></td></tr>
-            <tr><th scope="row" data-i18n="why_row_info"></th><td data-i18n="why_info_tacit" data-i18n-attr="data-label:why_col_tacit"></td><td data-i18n="why_info_hub" data-i18n-attr="data-label:why_col_hub"></td></tr>
-            <tr><th scope="row" data-i18n="why_row_examples"></th><td data-i18n="why_examples_tacit" data-i18n-attr="data-label:why_col_tacit"></td><td data-i18n="why_examples_hub" data-i18n-attr="data-label:why_col_hub"></td></tr>
-          </tbody>
-        </table>
+    <section class="grid rule-top block" aria-labelledby="why-h2">
+      <div class="col-main">
+        <h2 id="why-h2" data-i18n="why_h2"></h2>
+        <p data-i18n="why_p1"></p>
+        <p data-i18n="why_p2"></p>
+        <div class="table-scroll">
+          <table class="compare">
+            <caption data-i18n="why_table_caption"></caption>
+            <thead>
+              <tr><td></td><th scope="col" data-i18n="why_col_tacit"></th><th scope="col" data-i18n="why_col_hub"></th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row" data-i18n="why_row_how"></th><td data-i18n="why_how_tacit" data-i18n-attr="data-label:why_col_tacit"></td><td data-i18n="why_how_hub" data-i18n-attr="data-label:why_col_hub"></td></tr>
+              <tr><th scope="row" data-i18n="why_row_info"></th><td data-i18n="why_info_tacit" data-i18n-attr="data-label:why_col_tacit"></td><td data-i18n="why_info_hub" data-i18n-attr="data-label:why_col_hub"></td></tr>
+              <tr><th scope="row" data-i18n="why_row_examples"></th><td data-i18n="why_examples_tacit" data-i18n-attr="data-label:why_col_tacit"></td><td data-i18n="why_examples_hub" data-i18n-attr="data-label:why_col_hub"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p data-i18n-html="why_aprix"></p>
+        <p data-i18n-html="why_realpage"></p>
       </div>
-      <p data-i18n-html="why_aprix"></p>
-      <p data-i18n-html="why_realpage"></p>
-      <p class="caveat" data-i18n="why_not"></p>
+      <aside class="col-side side">
+        <p class="pullquote small" data-i18n="why_not"></p>
+      </aside>
+    </section>
+
+    <!-- Sobre o projeto -->
+    <section class="grid rule-top block" aria-labelledby="about-h2">
+      <h2 id="about-h2" class="col-side-left" data-i18n="about_h2"></h2>
+      <div class="col-rest">
+        <p data-i18n="about_p1"></p>
+        <p data-i18n="about_p2"></p>
+        <p class="note" data-i18n="about_stack"></p>
+      </div>
     </section>
 
     <!-- Bloco 7: método -->
-    <section id="method" class="block" aria-labelledby="method-h2" tabindex="-1">
-      <h2 id="method-h2" data-i18n="method_h2"></h2>
-      <details class="method">
-        <summary data-i18n="method_open"></summary>
-        <p data-i18n="method_model"></p>
-        <div class="table-scroll"><table class="params" id="params-table"></table></div>
-        <p id="method-measure"></p>
-        <p data-i18n="method_engine"></p>
-        <h3 data-i18n="lim_h3"></h3>
-        <ul>
-          <li data-i18n="lim_1"></li>
-          <li data-i18n="lim_2"></li>
-          <li id="lim-3"></li>
-          <li data-i18n="lim_4"></li>
-          <li data-i18n="lim_5"></li>
-          <li data-i18n="lim_6"></li>
-        </ul>
-        <h3 data-i18n="data_h3"></h3>
-        <ul>
-          <li><a href="data/qlearning_params.json" data-i18n="data_params"></a></li>
-          <li><a href="data/qlearning_reference.json" data-i18n="data_reference"></a></li>
-          <li><a href="data/qlearning_sessions.json" data-i18n="data_sessions"></a></li>
-          <li><a href="https://github.com/becmn/algorithmic-collusion" rel="noopener" data-i18n="data_repo"></a></li>
-        </ul>
-        <h3 data-i18n="cite_h3"></h3>
-        <p class="cite" id="cite-text"></p>
-        <p class="cite" data-i18n="cite_original"></p>
-      </details>
-      <p class="note" id="updated"></p>
+    <section id="method" class="grid rule-top block" aria-labelledby="method-h2" tabindex="-1">
+      <h2 id="method-h2" class="col-side-left" data-i18n="method_h2"></h2>
+      <div class="col-rest">
+        <details class="method">
+          <summary data-i18n="method_open"></summary>
+          <p data-i18n="method_model"></p>
+          <div class="table-scroll"><table class="params" id="params-table"></table></div>
+          <p id="method-measure"></p>
+          <p data-i18n="method_engine"></p>
+          <h3 data-i18n="lim_h3"></h3>
+          <ul>
+            <li data-i18n="lim_1"></li>
+            <li data-i18n="lim_2"></li>
+            <li id="lim-3"></li>
+            <li data-i18n="lim_4"></li>
+            <li data-i18n="lim_5"></li>
+            <li data-i18n="lim_6"></li>
+          </ul>
+          <h3 data-i18n="data_h3"></h3>
+          <ul>
+            <li><a href="data/qlearning_params.json" data-i18n="data_params"></a></li>
+            <li><a href="data/qlearning_reference.json" data-i18n="data_reference"></a></li>
+            <li><a href="data/qlearning_sessions.json" data-i18n="data_sessions"></a></li>
+            <li><a href="https://github.com/becmn/algorithmic-collusion" rel="noopener" data-i18n="data_repo"></a></li>
+          </ul>
+          <h3 data-i18n="cite_h3"></h3>
+          <p class="cite" id="cite-text"></p>
+          <p class="cite" data-i18n="cite_original"></p>
+        </details>
+        <p class="note" id="updated"></p>
+      </div>
     </section>
   </main>
 
@@ -189,7 +234,7 @@
     <div class="wrap">
       <p><span data-i18n="footer_author"></span> <span data-i18n="footer_license"></span></p>
       <p data-i18n="footer_credits"></p>
-      <p data-i18n="footer_no_ai"></p>
+      <p><span data-i18n="footer_no_ai"></span> <span data-i18n="footer_fonts"></span></p>
     </div>
   </footer>
 

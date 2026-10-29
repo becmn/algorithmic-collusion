@@ -52,7 +52,7 @@ const leftovers = ke.filter((k) => {
 });
 check("inglês sem sobras de português", !leftovers.length, leftovers.map((k) => `${k}: ${en[k]}`));
 
-const okCollusion = new Set(["dev_caveat", "why_not", "cite_original"]);
+const okCollusion = new Set(["dev_caveat", "why_not", "cite_original", "sep_rule_note"]);
 const collusion = kp.filter((k) => /colus|collu/i.test(pt[k] + " " + en[k]) && !okCollusion.has(k));
 check("nenhum texto chama o resultado do Q-learning de colusão", !collusion.length, collusion);
 
