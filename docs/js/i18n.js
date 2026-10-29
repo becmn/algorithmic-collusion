@@ -81,6 +81,7 @@
       source_live: "Ao vivo no seu navegador · semente {seed}",
       outcome_constant: "Resultado final: as duas empresas mantêm um preço constante.",
       outcome_cycle: "Resultado final: os preços se repetem num ciclo de {n} períodos.",
+      compute_time: "Calculado em {s} s no seu navegador.",
 
       status_converged_mid: "As duas empresas pararam de mudar de estratégia depois de {periods} milhões de períodos. O lucro ficou em Δ = {delta}: acima do nível competitivo e abaixo do de monopólio.",
       status_converged_high: "As duas empresas pararam de mudar de estratégia depois de {periods} milhões de períodos. O lucro ficou em Δ = {delta}, perto do lucro de monopólio.",
@@ -278,6 +279,7 @@
       source_live: "Live in your browser · seed {seed}",
       outcome_constant: "Final outcome: both firms keep a constant price.",
       outcome_cycle: "Final outcome: prices repeat in a cycle of {n} periods.",
+      compute_time: "Computed in {s} s in your browser.",
 
       status_converged_mid: "Both firms stopped changing strategy after {periods} million periods. Profit settled at Δ = {delta}: above the competitive level and below the monopoly level.",
       status_converged_high: "Both firms stopped changing strategy after {periods} million periods. Profit settled at Δ = {delta}, close to monopoly profit.",
