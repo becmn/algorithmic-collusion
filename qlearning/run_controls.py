@@ -49,7 +49,12 @@ CONDITIONS = {
                   "fonte": "Calvano, Apêndice, Tabela A1 (Pesquisa 1)"},
 }
 TARGET_A1 = {"delta": 0.185, "nash_share": 0.273, "qloss": 0.013}
-BASE = {"delta": 0.849, "nash_share_projeto": 0.492}
+# caso base lido de results/ (revisão de 16/10/2026: antes eram números digitados)
+with open(OUT / "qlearning_base_meta.json", encoding="utf-8") as _f:
+    _bd = json.load(_f)["summary"]["delta_mean"]
+with open(OUT / "qlearning_bestresponse_meta.json", encoding="utf-8") as _f:
+    _bn = json.load(_f)["summary"]["by_version"]["calvano"]["nash_share"]
+BASE = {"delta": round(_bd, 3), "nash_share_projeto": round(_bn, 3)}
 
 
 def q0_for(delta, memory):

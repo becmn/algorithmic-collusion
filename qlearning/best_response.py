@@ -28,7 +28,6 @@ from session import limit_cycle, run_session
 
 TOL_VI = 1e-12   # parada da iteração de valor
 TOL_BR = 1e-9    # tolerância relativa para considerar a ação aprendida uma melhor resposta
-MAX_CYCLE = 225
 
 
 @njit(cache=True)

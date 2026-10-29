@@ -1,0 +1,46 @@
+# CI (integração contínua): o GitHub roda estes testes a cada pull request e a cada push na main.
+# São os testes rápidos (poucos minutos). As 1.000 sessões completas não rodam aqui.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:   # permite rodar à mão na aba Actions
+
+jobs:
+  python:
+    name: Python (Q-learning)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # Só os pacotes que os scripts usam, nas versões do requirements.txt
+      # (o requirements.txt completo tem pacotes que só existem no Windows).
+      - name: Instalar pacotes
+        run: pip install numpy==2.4.6 scipy==1.17.1 numba==0.68.0 pandas==3.0.6 matplotlib==3.11.2
+      - name: Pontos de referência (19 conferências)
+        env: {PYTHONIOENCODING: utf-8}
+        run: |
+          python qlearning/reference_points.py | tee ref.txt
+          grep -q "19 de 19 conferências OK" ref.txt
+      - name: Reprodução exata do caso base (sementes 1 a 40)
+        env: {PYTHONIOENCODING: utf-8}
+        run: python qlearning/check_reproduction.py 40
+
+  javascript:
+    name: JavaScript (motor do simulador)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Motor × Python (14 conferências)
+        run: node docs/js/test_engine.js
+      - name: Motor × reimplementação independente (17 conferências)
+        run: node docs/js/test_engine_independent.js

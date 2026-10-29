@@ -17,8 +17,10 @@ as sessões de Δ mais próximo dos percentis 25, 50 e 75 das 1.000 sessões da 
 
 As 3 sessões são refeitas com as mesmas sementes e o mesmo código (trajectories.py, igual
 a session.py); o script confere que períodos, Δ, ciclo, teste de desvio e trajetória em
-blocos logarítmicos são iguais aos já salvos em results/. Os demais números são só lidos
-de results/: nada novo é calculado sobre as 1.000 sessões.
+blocos logarítmicos são iguais aos já salvos em results/. Os demais números são lidos de
+results/; sobre as 1.000 sessões só se calculam resumos descritivos (mediana, percentis e
+frações) a partir dos CSV, e o Δ de preços ao acaso é calculado da tabela de lucros
+(revisão de 16/10/2026: antes eram números digitados).
 Números com ponto flutuante são arredondados a 6 casas decimais no JSON.
 Código próprio do projeto.
 Uso: python qlearning/export_simulator.py
@@ -95,6 +97,9 @@ def num(s):
 
 # ---------------------------------------------------------------- dados já salvos
 b = setup()
+# Δ esperado com as duas firmas sorteando preços uniformemente na grade (0,4974; Fase 1.1)
+DELTA_RANDOM = float((0.5 * (b["PI"][:, :, 0] + b["PI"][:, :, 1]).mean() - b["piN"])
+                     / (b["piM"] - b["piN"]))
 P = PARAMS
 prices = b["prices"]
 PI = b["PI"]
@@ -410,8 +415,8 @@ reference = {
                                                "epsilon_start")},
         "around_period_300": {"t_start": num(b300["t_start"]), "t_end": num(b300["t_end"]),
                               "delta_mean": num(b300["delta_mean"])},
-        "delta_random_prices": {"value": 0.4974, "source": "Ficha de parâmetros, teste de sanidade "
-                                "(qlearning/reference_points.py, Fase 1.1) [I]"},
+        "delta_random_prices": {"value": DELTA_RANDOM, "source": "calculado da tabela de lucros; "
+                                "igual ao teste de sanidade da Fase 1.1 (0,4974) [I]"},
     },
     "mandatory_tests": [{k: num(v) for k, v in x.items()} for x in tests_table],
 }
@@ -419,7 +424,9 @@ checks["referencia_igual_results"] = (
     abs(np.mean(reference["all_sessions"]["delta"]) - bs["delta_mean"]) < 1e-12
     and len(reference["all_sessions"]["seed"]) == 1000
     and cls2.count("A") == dsum["classes"]["theta_0.02"]["A"]
-    and abs(reference["learning_trajectory"]["around_period_300"]["delta_mean"] - 0.497) < 0.0005)
+    # o bloco perto do período 300 é uma média amostral (20 períodos × 1.000 sessões quase ao acaso):
+    # compara com o valor teórico com tolerância de 0,005, acima do ruído de amostra (ordem de 10⁻³)
+    and abs(reference["learning_trajectory"]["around_period_300"]["delta_mean"] - DELTA_RANDOM) < 0.005)
 
 # ---------------------------------------------------------------- gravação
 meta = {"generated": datetime.now().isoformat(timespec="seconds"),

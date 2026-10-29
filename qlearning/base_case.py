@@ -29,8 +29,12 @@ def setup(p=PARAMS):
         q = demand(x, a, a0, mu)
         return 1 - (x - c) * (1 - q) / mu + (x[::-1] - c) * q[::-1] / mu
 
-    pN = fsolve(foc_nash, np.array([1.5, 1.5]))[0]
-    pM = fsolve(foc_mon, np.array([1.9, 1.9]))[0]
+    # full_output: confere se o fsolve convergiu (revisão de 16/10/2026)
+    xN, _, okN, msgN = fsolve(foc_nash, np.array([1.5, 1.5]), full_output=True)
+    xM, _, okM, msgM = fsolve(foc_mon, np.array([1.9, 1.9]), full_output=True)
+    if okN != 1 or okM != 1:
+        raise RuntimeError(f"fsolve não convergiu: Nash: {msgN}; monopólio: {msgM}")
+    pN, pM = xN[0], xM[0]
     piN = (pN - c) * demand(np.array([pN, pN]), a, a0, mu)[0]
     piM = (pM - c) * demand(np.array([pM, pM]), a, a0, mu)[0]
     prices = calvano_grid(pN, pM, p["m"], p["xi"])

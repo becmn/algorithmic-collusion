@@ -28,8 +28,19 @@ self.onmessage = function (ev) {
       self.postMessage({ type: "ready", grid: Array.from(market.prices) });
     } else if (msg.type === "start") {
       if (!market) throw new Error("Worker sem parâmetros: envie 'init' antes de 'start'.");
+      // validação das entradas (revisão de 16/10/2026)
+      const seed = msg.seed;
+      if (!Number.isInteger(seed) || seed < 0 || seed > 0xFFFFFFFF)
+        throw new Error("Semente inválida: use um inteiro entre 0 e 4294967295.");
+      const blockSize = msg.blockSize === undefined ? 10000 : msg.blockSize;
+      if (!Number.isInteger(blockSize) || blockSize < 1)
+        throw new Error("blockSize inválido: use um inteiro ≥ 1.");
+      const opts = msg.opts || {};
+      for (const k of ["tStable", "tMax"])
+        if (opts[k] !== undefined && (!Number.isInteger(opts[k]) || opts[k] < 1))
+          throw new Error(k + " inválido: use um inteiro ≥ 1.");
       runId += 1;
-      runLoop(runId, msg.seed >>> 0, msg.opts || {}, msg.blockSize || 10000);
+      runLoop(runId, seed, opts, blockSize);
     } else if (msg.type === "stop") {
       runId += 1;
     }
@@ -45,6 +56,15 @@ function runLoop(id, seed, opts, blockSize) {
 
   function slice() {
     if (id !== runId) return;               // sessão interrompida
+    try {
+      sliceBody();
+    } catch (err) {                         // erros dentro do setTimeout também viram mensagem
+      self.postMessage({ type: "error", runId: id,
+                         message: String(err && err.message ? err.message : err) });
+    }
+  }
+
+  function sliceBody() {
     const blocks = [];
     const tSlice = Date.now();
     while (!sess.done && Date.now() - tSlice < SLICE_MS) {

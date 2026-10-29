@@ -1,0 +1,654 @@
+{
+  "description": "Fase 1.8, teste de separação: k = 0 × k = 1 com a mesma exploração, δ = 0,95, sementes 1 a 1000",
+  "rule": "Regra fixada em 16/10/2026, antes de rodar as condições novas: D = Δ(k=1) − Δ(k=0), IC 95% de Welch, nas condições de mais aprendizado (β = 1e-6 e ε mínimo = 5%). Favorável à leitura de punição se o IC de D ficar inteiro acima de 0 nas duas; desfavorável se ficar inteiro abaixo de 0 nas duas; inconclusivo nos demais casos.",
+  "theta": 0.02,
+  "t_fixed_eps_min": 4000000,
+  "conditions": {
+    "k0_beta4e-06": {
+      "date": "2026-10-16T08:26:33",
+      "checks": {
+        "Δ = controle sem memória (Fase 1.5 parte 2)": true,
+        "Nash = controle sem memória (Fase 1.5 parte 2)": true
+      },
+      "memory": 0,
+      "beta": 4e-06,
+      "eps_min": 0.0,
+      "t_max": 1000000000,
+      "n_sessions": 1000,
+      "seconds": 58.69618741799991,
+      "share_converged": 1.0,
+      "periods_mean": 1941271.788,
+      "delta_mean": 0.9565662294937965,
+      "delta_sd": 0.04459641780736008,
+      "delta_ci95_t": [
+        0.9537988128060174,
+        0.9593336461815757
+      ],
+      "delta_median": 0.9685979680168119,
+      "share_cycle": 0.0,
+      "nash1_share": 0.0,
+      "nash1_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "nash_opt_share": 0.0,
+      "nash_opt_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "qloss_path_mean": 0.008099503166991717
+    },
+    "k1_beta4e-06": {
+      "date": "2026-10-16T08:27:40",
+      "checks": {
+        "Δ = Fase 1.5 parte 3": true,
+        "Nash 1 período = Fase 1.5 parte 3": true,
+        "R, G, V = Fase 1.5 parte 3": true,
+        "Nash ótimo = Fase 1.5 parte 1": true
+      },
+      "memory": 1,
+      "beta": 4e-06,
+      "eps_min": 0.0,
+      "t_max": 1000000000,
+      "n_sessions": 1000,
+      "seconds": 66.04191521200005,
+      "share_converged": 1.0,
+      "periods_mean": 1873769.812,
+      "delta_mean": 0.849348000076128,
+      "delta_sd": 0.11411614939582072,
+      "delta_ci95_t": [
+        0.8422665582987353,
+        0.8564294418535207
+      ],
+      "delta_median": 0.8675865940474076,
+      "share_cycle": 0.388,
+      "nash1_share": 0.492,
+      "nash1_wilson95": [
+        0.4611041586281342,
+        0.5229570695076347
+      ],
+      "nash_opt_share": 0.0,
+      "nash_opt_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "qloss_path_mean": 0.001781971876414981,
+      "R_mean": -0.12460600720204718,
+      "share_G_lt_0": 0.96,
+      "classes": {
+        "A": 903,
+        "B": 4,
+        "C": 78,
+        "outro": 15
+      },
+      "classA_wilson95": [
+        0.8830847944509657,
+        0.9198308382096769
+      ]
+    },
+    "k0_beta1e-05": {
+      "date": "2026-10-16T08:28:07",
+      "checks": {},
+      "memory": 0,
+      "beta": 1e-05,
+      "eps_min": 0.0,
+      "t_max": 1000000000,
+      "n_sessions": 1000,
+      "seconds": 26.036133387000064,
+      "share_converged": 1.0,
+      "periods_mean": 846272.11,
+      "delta_mean": 0.9561782219328739,
+      "delta_sd": 0.044473545006348945,
+      "delta_ci95_t": [
+        0.9534184300781354,
+        0.9589380137876125
+      ],
+      "delta_median": 0.9685979680168119,
+      "share_cycle": 0.0,
+      "nash1_share": 0.0,
+      "nash1_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "nash_opt_share": 0.0,
+      "nash_opt_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "qloss_path_mean": 0.00803219422528119
+    },
+    "k1_beta1e-05": {
+      "date": "2026-10-16T08:28:48",
+      "checks": {
+        "Δ = Fase 1.5 parte 3": true,
+        "Nash 1 período = Fase 1.5 parte 3": true,
+        "R, G, V = Fase 1.5 parte 3": true
+      },
+      "memory": 1,
+      "beta": 1e-05,
+      "eps_min": 0.0,
+      "t_max": 1000000000,
+      "n_sessions": 1000,
+      "seconds": 39.33309693399997,
+      "share_converged": 1.0,
+      "periods_mean": 961063.445,
+      "delta_mean": 0.8367149049689795,
+      "delta_sd": 0.11041006826231392,
+      "delta_ci95_t": [
+        0.8298634428912891,
+        0.8435663670466699
+      ],
+      "delta_median": 0.8522659129460235,
+      "share_cycle": 0.586,
+      "nash1_share": 0.204,
+      "nash1_wilson95": [
+        0.1801790152622816,
+        0.23008642576116703
+      ],
+      "nash_opt_share": 0.0,
+      "nash_opt_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "qloss_path_mean": 0.004742060040226145,
+      "R_mean": -0.11409977861155451,
+      "share_G_lt_0": 0.928,
+      "classes": {
+        "A": 858,
+        "B": 16,
+        "C": 78,
+        "outro": 48
+      },
+      "classA_wilson95": [
+        0.8349940829788968,
+        0.8782659579454458
+      ]
+    },
+    "k0_beta2e-06": {
+      "date": "2026-10-16T08:30:45",
+      "checks": {},
+      "memory": 0,
+      "beta": 2e-06,
+      "eps_min": 0.0,
+      "t_max": 1000000000,
+      "n_sessions": 1000,
+      "seconds": 115.48203252300004,
+      "share_converged": 1.0,
+      "periods_mean": 3732576.729,
+      "delta_mean": 0.9572845204772896,
+      "delta_sd": 0.04293710759602436,
+      "delta_ci95_t": [
+        0.9546200717630569,
+        0.9599489691915224
+      ],
+      "delta_median": 0.9685979680168119,
+      "share_cycle": 0.0,
+      "nash1_share": 0.0,
+      "nash1_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "nash_opt_share": 0.0,
+      "nash_opt_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "qloss_path_mean": 0.008052474761198653
+    },
+    "k1_beta2e-06": {
+      "date": "2026-10-16T08:32:43",
+      "checks": {
+        "Δ = Fase 1.5 parte 3": true,
+        "Nash 1 período = Fase 1.5 parte 3": true,
+        "R, G, V = Fase 1.5 parte 3": true
+      },
+      "memory": 1,
+      "beta": 2e-06,
+      "eps_min": 0.0,
+      "t_max": 1000000000,
+      "n_sessions": 1000,
+      "seconds": 117.12902017900001,
+      "share_converged": 1.0,
+      "periods_mean": 3327959.382,
+      "delta_mean": 0.8060249266033361,
+      "delta_sd": 0.1242129991670738,
+      "delta_ci95_t": [
+        0.7983169279874175,
+        0.8137329252192548
+      ],
+      "delta_median": 0.8238836210747611,
+      "share_cycle": 0.248,
+      "nash1_share": 0.714,
+      "nash1_wilson95": [
+        0.6852148435109845,
+        0.741147303857198
+      ],
+      "nash_opt_share": 0.044,
+      "nash_opt_wilson95": [
+        0.0329382145884185,
+        0.058551789150407776
+      ],
+      "qloss_path_mean": 0.0006637778686757376,
+      "R_mean": -0.12764400058602823,
+      "share_G_lt_0": 0.987,
+      "classes": {
+        "A": 951,
+        "B": 2,
+        "C": 44,
+        "outro": 3
+      },
+      "classA_wilson95": [
+        0.9358092984933898,
+        0.9627389653526394
+      ]
+    },
+    "k0_beta1e-06": {
+      "date": "2026-10-16T08:36:33",
+      "checks": {},
+      "memory": 0,
+      "beta": 1e-06,
+      "eps_min": 0.0,
+      "t_max": 1000000000,
+      "n_sessions": 1000,
+      "seconds": 228.14344884399998,
+      "share_converged": 1.0,
+      "periods_mean": 7253171.215,
+      "delta_mean": 0.9578272355934525,
+      "delta_sd": 0.040867409395491563,
+      "delta_ci95_t": [
+        0.9552912213504269,
+        0.9603632498364781
+      ],
+      "delta_median": 0.9685979680168119,
+      "share_cycle": 0.0,
+      "nash1_share": 0.0,
+      "nash1_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "nash_opt_share": 0.0,
+      "nash_opt_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "qloss_path_mean": 0.007946638585442919
+    },
+    "k1_beta1e-06": {
+      "date": "2026-10-16T08:40:06",
+      "checks": {
+        "Δ = Fase 1.5 parte 3": true,
+        "Nash 1 período = Fase 1.5 parte 3": true,
+        "R, G, V = Fase 1.5 parte 3": true
+      },
+      "memory": 1,
+      "beta": 1e-06,
+      "eps_min": 0.0,
+      "t_max": 1000000000,
+      "n_sessions": 1000,
+      "seconds": 210.99097692600003,
+      "share_converged": 1.0,
+      "periods_mean": 6178617.455,
+      "delta_mean": 0.7418102054962218,
+      "delta_sd": 0.12438653750695519,
+      "delta_ci95_t": [
+        0.734091438013175,
+        0.7495289729792686
+      ],
+      "delta_median": 0.7474845243612063,
+      "share_cycle": 0.142,
+      "nash1_share": 0.798,
+      "nash1_wilson95": [
+        0.771996830196033,
+        0.8217224217465763
+      ],
+      "nash_opt_share": 0.083,
+      "nash_opt_wilson95": [
+        0.06745502144289929,
+        0.10173649513405368
+      ],
+      "qloss_path_mean": 0.0003120872817424665,
+      "R_mean": -0.11780676199774492,
+      "share_G_lt_0": 0.982,
+      "classes": {
+        "A": 948,
+        "B": 0,
+        "C": 48,
+        "outro": 4
+      },
+      "classA_wilson95": [
+        0.93244426068072,
+        0.9601269637162226
+      ]
+    },
+    "k0_epsmin0.001": {
+      "date": "2026-10-16T08:42:07",
+      "checks": {
+        "Δ médio = diagnóstico ε mínimo (Fase 1.5 parte 3)": true
+      },
+      "memory": 0,
+      "beta": 4e-06,
+      "eps_min": 0.001,
+      "t_max": 4000000,
+      "n_sessions": 1000,
+      "seconds": 119.00629772599996,
+      "share_converged": 0.0,
+      "periods_mean": 4000000.0,
+      "delta_mean": 0.956971895294098,
+      "delta_sd": 0.054158270968920966,
+      "delta_ci95_t": [
+        0.9536111208142266,
+        0.9603326697739694
+      ],
+      "delta_median": 0.9685979680168119,
+      "share_cycle": 0.0,
+      "nash1_share": 0.001,
+      "nash1_wilson95": [
+        0.00017654637062607809,
+        0.0056425585979579355
+      ],
+      "nash_opt_share": 0.001,
+      "nash_opt_wilson95": [
+        0.00017654637062607809,
+        0.0056425585979579355
+      ],
+      "qloss_path_mean": 0.008219291161035317
+    },
+    "k1_epsmin0.001": {
+      "date": "2026-10-16T08:44:19",
+      "checks": {},
+      "memory": 1,
+      "beta": 4e-06,
+      "eps_min": 0.001,
+      "t_max": 4000000,
+      "n_sessions": 1000,
+      "seconds": 130.37107361800008,
+      "share_converged": 0.0,
+      "periods_mean": 4000000.0,
+      "delta_mean": 0.8535052817894305,
+      "delta_sd": 0.11957399803770163,
+      "delta_ci95_t": [
+        0.8460851549302862,
+        0.8609254086485748
+      ],
+      "delta_median": 0.8854069002892946,
+      "share_cycle": 0.32,
+      "nash1_share": 0.537,
+      "nash1_wilson95": [
+        0.5060124890263216,
+        0.5677043308457475
+      ],
+      "nash_opt_share": 0.0,
+      "nash_opt_wilson95": [
+        2.168404344971009e-19,
+        0.0038267584855551234
+      ],
+      "qloss_path_mean": 0.0017447422363601691,
+      "R_mean": -0.1285392828603123,
+      "share_G_lt_0": 0.967,
+      "classes": {
+        "A": 905,
+        "B": 4,
+        "C": 79,
+        "outro": 12
+      },
+      "classA_wilson95": [
+        0.8852455602057479,
+        0.9216547654209526
+      ]
+    },
+    "k0_epsmin0.01": {
+      "date": "2026-10-16T08:46:29",
+      "checks": {
+        "Δ médio = diagnóstico ε mínimo (Fase 1.5 parte 3)": true
+      },
+      "memory": 0,
+      "beta": 4e-06,
+      "eps_min": 0.01,
+      "t_max": 4000000,
+      "n_sessions": 1000,
+      "seconds": 129.05119297500005,
+      "share_converged": 0.0,
+      "periods_mean": 4000000.0,
+      "delta_mean": 0.9234179801142484,
+      "delta_sd": 0.12356210664630372,
+      "delta_ci95_t": [
+        0.9157503724290926,
+        0.9310855877994041
+      ],
+      "delta_median": 0.9685979680168119,
+      "share_cycle": 0.0,
+      "nash1_share": 0.002,
+      "nash1_wilson95": [
+        0.000548643588120728,
+        0.007262807863492177
+      ],
+      "nash_opt_share": 0.002,
+      "nash_opt_wilson95": [
+        0.000548643588120728,
+        0.007262807863492177
+      ],
+      "qloss_path_mean": 0.007544833454560639
+    },
+    "k1_epsmin0.01": {
+      "date": "2026-10-16T08:49:01",
+      "checks": {},
+      "memory": 1,
+      "beta": 4e-06,
+      "eps_min": 0.01,
+      "t_max": 4000000,
+      "n_sessions": 1000,
+      "seconds": 149.68743873099993,
+      "share_converged": 0.0,
+      "periods_mean": 4000000.0,
+      "delta_mean": 0.812195525480324,
+      "delta_sd": 0.16067826547134548,
+      "delta_ci95_t": [
+        0.8022246862270549,
+        0.8221663647335932
+      ],
+      "delta_median": 0.8476502932009684,
+      "share_cycle": 0.327,
+      "nash1_share": 0.547,
+      "nash1_wilson95": [
+        0.5160261711771321,
+        0.5776141135252257
+      ],
+      "nash_opt_share": 0.004,
+      "nash_opt_wilson95": [
+        0.0015565881404084308,
+        0.010239556277262253
+      ],
+      "qloss_path_mean": 0.00360805010177383,
+      "R_mean": -0.12312534390230562,
+      "share_G_lt_0": 0.948,
+      "classes": {
+        "A": 895,
+        "B": 11,
+        "C": 70,
+        "outro": 24
+      },
+      "classA_wilson95": [
+        0.8744646434108284,
+        0.9125122173855832
+      ]
+    },
+    "k0_epsmin0.05": {
+      "date": "2026-10-16T08:51:12",
+      "checks": {
+        "Δ médio = diagnóstico ε mínimo (Fase 1.5 parte 3)": true
+      },
+      "memory": 0,
+      "beta": 4e-06,
+      "eps_min": 0.05,
+      "t_max": 4000000,
+      "n_sessions": 1000,
+      "seconds": 130.16235511100012,
+      "share_converged": 0.0,
+      "periods_mean": 4000000.0,
+      "delta_mean": 0.7965324664195834,
+      "delta_sd": 0.2650917277654531,
+      "delta_ci95_t": [
+        0.7800822825868977,
+        0.8129826502522691
+      ],
+      "delta_median": 0.9262500294506304,
+      "share_cycle": 0.0,
+      "nash1_share": 0.006,
+      "nash1_wilson95": [
+        0.0027526691418763745,
+        0.01302816824185209
+      ],
+      "nash_opt_share": 0.006,
+      "nash_opt_wilson95": [
+        0.0027526691418763745,
+        0.01302816824185209
+      ],
+      "qloss_path_mean": 0.006478246219717605
+    },
+    "k1_epsmin0.05": {
+      "date": "2026-10-16T08:53:41",
+      "checks": {},
+      "memory": 1,
+      "beta": 4e-06,
+      "eps_min": 0.05,
+      "t_max": 4000000,
+      "n_sessions": 1000,
+      "seconds": 146.27341781099994,
+      "share_converged": 0.0,
+      "periods_mean": 4000000.0,
+      "delta_mean": 0.5507285627796598,
+      "delta_sd": 0.2519966474237524,
+      "delta_ci95_t": [
+        0.5350909900410304,
+        0.5663661355182891
+      ],
+      "delta_median": 0.6075637744565859,
+      "share_cycle": 0.647,
+      "nash1_share": 0.313,
+      "nash1_wilson95": [
+        0.28502093895360764,
+        0.34241026871999
+      ],
+      "nash_opt_share": 0.033,
+      "nash_opt_wilson95": [
+        0.023592927958426907,
+        0.04598126446708159
+      ],
+      "qloss_path_mean": 0.012172136100173293,
+      "R_mean": -0.08299752484173538,
+      "share_G_lt_0": 0.809,
+      "classes": {
+        "A": 722,
+        "B": 52,
+        "C": 168,
+        "outro": 58
+      },
+      "classA_wilson95": [
+        0.6934229755065661,
+        0.7488779437258474
+      ]
+    }
+  },
+  "versions": {
+    "python": "3.13.16",
+    "numpy": "2.4.6",
+    "numba": "0.68.0",
+    "scipy": "1.17.1",
+    "platform": "Linux-6.18.44-fc-v139-x86_64-with-glibc2.39"
+  },
+  "numba_threads": 2,
+  "comparison": {
+    "beta1e-05": {
+      "delta_k0": 0.9561782219328739,
+      "delta_k1": 0.8367149049689795,
+      "D": -0.11946331696389445,
+      "D_ci95_welch": [
+        -0.12684757057958573,
+        -0.11207906334820315
+      ],
+      "p_welch": 1.3543940585828092e-164,
+      "nash1_k1": 0.204,
+      "nash_opt_k1": 0.0,
+      "classA_k1": 0.858
+    },
+    "beta4e-06": {
+      "delta_k0": 0.9565662294937965,
+      "delta_k1": 0.849348000076128,
+      "D": -0.10721822941766856,
+      "D_ci95_welch": [
+        -0.11481909712860548,
+        -0.09961736170673165
+      ],
+      "p_welch": 7.442882895368758e-133,
+      "nash1_k1": 0.492,
+      "nash_opt_k1": 0.0,
+      "classA_k1": 0.903
+    },
+    "beta2e-06": {
+      "delta_k0": 0.9572845204772896,
+      "delta_k1": 0.8060249266033361,
+      "D": -0.1512595938739535,
+      "D_ci95_welch": [
+        -0.1594132293303636,
+        -0.1431059584175434
+      ],
+      "p_welch": 1.2109677379905956e-197,
+      "nash1_k1": 0.714,
+      "nash_opt_k1": 0.044,
+      "classA_k1": 0.951
+    },
+    "beta1e-06": {
+      "delta_k0": 0.9578272355934525,
+      "delta_k1": 0.7418102054962218,
+      "D": -0.21601703009723072,
+      "D_ci95_welch": [
+        -0.2241399965504712,
+        -0.20789406364399024
+      ],
+      "p_welch": 0.0,
+      "nash1_k1": 0.798,
+      "nash_opt_k1": 0.083,
+      "classA_k1": 0.948
+    },
+    "epsmin0.001": {
+      "delta_k0": 0.956971895294098,
+      "delta_k1": 0.8535052817894305,
+      "D": -0.10346661350466746,
+      "D_ci95_welch": [
+        -0.11160956365886453,
+        -0.09532366335047039
+      ],
+      "p_welch": 1.0858359039457412e-113,
+      "nash1_k1": 0.537,
+      "nash_opt_k1": 0.0,
+      "classA_k1": 0.905
+    },
+    "epsmin0.01": {
+      "delta_k0": 0.9234179801142484,
+      "delta_k1": 0.812195525480324,
+      "D": -0.11122245463392433,
+      "D_ci95_welch": [
+        -0.1237934824178706,
+        -0.09865142684997806
+      ],
+      "p_welch": 1.1505279540005722e-62,
+      "nash1_k1": 0.547,
+      "nash_opt_k1": 0.004,
+      "classA_k1": 0.895
+    },
+    "epsmin0.05": {
+      "delta_k0": 0.7965324664195834,
+      "delta_k1": 0.5507285627796598,
+      "D": -0.24580390363992366,
+      "D_ci95_welch": [
+        -0.2684869264512987,
+        -0.22312088082854867
+      ],
+      "p_welch": 1.6591267038536611e-90,
+      "nash1_k1": 0.313,
+      "nash_opt_k1": 0.033,
+      "classA_k1": 0.722
+    }
+  },
+  "decision": "desfavoravel"
+}

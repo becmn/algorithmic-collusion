@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering\small
+\caption{Separation test: profit gain $\Delta$ with and without memory under the same exploration ($\delta = 0.95$, 1{,}000 sessions per cell). $D = \Delta_{k=1} - \Delta_{k=0}$ with 95\% Welch interval. Nash: share of sessions in Nash equilibrium on path, one-period deviations (any deviation in parentheses). Class A: punishment with return ($\theta = 2\%$). Decision rule fixed before running: punishment reading supported only if $D > 0$ at both most-learning conditions ($\beta = 10^{-6}$ and $\varepsilon \geq 5\%$). Result: unfavorable.}
+\label{tab:separation}
+\begin{tabular}{lccccc}
+\toprule
+Exploration & $\Delta$, no memory & $\Delta$, memory & $D$ (95\% CI) & Nash, memory & Class A \\
+\midrule
+$\beta = 10^{-5}$ & 0.956 & 0.837 & -0.119 (-0.127 to -0.112) & 0.204 (0.000) & 0.858 \\
+$\beta = 4\times10^{-6}$ (base) & 0.957 & 0.849 & -0.107 (-0.115 to -0.100) & 0.492 (0.000) & 0.903 \\
+$\beta = 2\times10^{-6}$ & 0.957 & 0.806 & -0.151 (-0.159 to -0.143) & 0.714 (0.044) & 0.951 \\
+$\beta = 10^{-6}$ & 0.958 & 0.742 & -0.216 (-0.224 to -0.208) & 0.798 (0.083) & 0.948 \\
+\midrule
+$\varepsilon \geq 0.1\%$ & 0.957 & 0.854 & -0.103 (-0.112 to -0.095) & 0.537 (0.000) & 0.905 \\
+$\varepsilon \geq 1\%$ & 0.923 & 0.812 & -0.111 (-0.124 to -0.099) & 0.547 (0.004) & 0.895 \\
+$\varepsilon \geq 5\%$ & 0.797 & 0.551 & -0.246 (-0.268 to -0.223) & 0.313 (0.033) & 0.722 \\
+\bottomrule
+\end{tabular}
+\end{table}
