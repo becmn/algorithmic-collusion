@@ -54,6 +54,9 @@ with sync_playwright() as p:
         check(f"[{lang}] gráficos desenhados", pg.evaluate("['learn-chart','dev-chart','sep-chart'].every(i => document.querySelector('#'+i+' svg polyline, #'+i+' svg path, #'+i+' svg circle'))"))
         check(f"[{lang}] Δ da sessão gravada mostrado", re.match(r"^0[.,]8\d$", pg.inner_text("#delta-value")), pg.inner_text("#delta-value"))
         check(f"[{lang}] placar do desvio preenchido", pg.inner_text("#verdict").strip() != "")
+        check(f"[{lang}] tabela 1 com 6 linhas de resultados", pg.evaluate("document.querySelectorAll('#tab1 tbody tr').length") == 6)
+        check(f"[{lang}] fontes do site carregadas (Newsreader e Public Sans)",
+              pg.evaluate("document.fonts.ready.then(() => document.fonts.check('600 20px Newsreader') && document.fonts.check('16px \"Public Sans\"'))"))
         if SHOTS: pg.screenshot(path=str(SHOTS / f"desktop_{lang}.png"), full_page=True)
         ctx.close()
 

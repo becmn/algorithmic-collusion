@@ -61,8 +61,8 @@
     let s = "";
     for (let p = 1.5; p <= 1.95; p += 0.1) {
       const yy = y(p).toFixed(1);
-      s += `<line x1="${x0}" x2="${x1}" y1="${yy}" y2="${yy}" stroke="#ece9e2"/>`;
-      s += `<text x="${x0 - 6}" y="${yy}" dy="0.32em" text-anchor="end" font-size="${fs}" fill="#55555b">${esc(num(p, 1))}</text>`;
+      s += `<line x1="${x0}" x2="${x1}" y1="${yy}" y2="${yy}" stroke="#e9e7e1"/>`;
+      s += `<text x="${x0 - 6}" y="${yy}" dy="0.32em" text-anchor="end" font-size="${fs}" fill="#4a4f58">${esc(num(p, 1))}</text>`;
     }
     return s;
   }
@@ -70,11 +70,11 @@
   function refLines(y, x0, x1, fs) {
     const rp = S.params.reference_points;
     const yN = y(rp.price_nash), yM = y(rp.price_monopoly);
-    return `<rect x="${x0}" y="${yM}" width="${x1 - x0}" height="${yN - yM}" fill="rgba(31,95,168,0.07)"/>` +
-      `<line x1="${x0}" x2="${x1}" y1="${yM}" y2="${yM}" stroke="#3f3f44" stroke-width="1.5" stroke-dasharray="7 3 2 3"/>` +
-      `<line x1="${x0}" x2="${x1}" y1="${yN}" y2="${yN}" stroke="#3f3f44" stroke-width="1.5" stroke-dasharray="2 3"/>` +
-      `<text x="${x1 - 4}" y="${yM - 6}" text-anchor="end" font-size="${fs}" fill="#3f3f44" paint-order="stroke" stroke="#fff" stroke-width="3">${esc(t("line_monopoly"))}</text>` +
-      `<text x="${x1 - 4}" y="${yN + fs + 3}" text-anchor="end" font-size="${fs}" fill="#3f3f44" paint-order="stroke" stroke="#fff" stroke-width="3">${esc(t("line_nash"))}</text>`;
+    return `<rect x="${x0}" y="${yM}" width="${x1 - x0}" height="${yN - yM}" fill="rgba(29,78,137,0.05)"/>` +
+      `<line x1="${x0}" x2="${x1}" y1="${yM}" y2="${yM}" stroke="#17202a" stroke-width="1.5" stroke-dasharray="7 3 2 3"/>` +
+      `<line x1="${x0}" x2="${x1}" y1="${yN}" y2="${yN}" stroke="#17202a" stroke-width="1.5" stroke-dasharray="2 3"/>` +
+      `<text x="${x1 - 4}" y="${yM - 6}" text-anchor="end" font-size="${fs + 1}" font-family="Newsreader, Georgia, serif" font-style="italic" fill="#17202a" paint-order="stroke" stroke="#fbfbf8" stroke-width="3">${esc(t("line_monopoly"))}</text>` +
+      `<text x="${x1 - 4}" y="${yN + fs + 4}" text-anchor="end" font-size="${fs + 1}" font-family="Newsreader, Georgia, serif" font-style="italic" fill="#17202a" paint-order="stroke" stroke="#fbfbf8" stroke-width="3">${esc(t("line_nash"))}</text>`;
   }
 
   function yDomain() {
@@ -96,18 +96,18 @@
     let s = svgOpen(f.w, f.h) + priceAxis(null, y, m.l, f.w - m.r, f.fs);
     for (let v = 0; v <= xMax + 1; v += 5e5) {
       const xx = x(v).toFixed(1);
-      s += `<line x1="${xx}" x2="${xx}" y1="${f.h - m.b}" y2="${f.h - m.b + 4}" stroke="#55555b"/>`;
-      s += `<text x="${xx}" y="${f.h - m.b + 16}" text-anchor="middle" font-size="${f.fs}" fill="#55555b">${esc(num(v / 1e6, 1))}</text>`;
+      s += `<line x1="${xx}" x2="${xx}" y1="${f.h - m.b}" y2="${f.h - m.b + 4}" stroke="#4a4f58"/>`;
+      s += `<text x="${xx}" y="${f.h - m.b + 16}" text-anchor="middle" font-size="${f.fs}" fill="#4a4f58">${esc(num(v / 1e6, 1))}</text>`;
     }
-    s += `<text x="${(m.l + f.w - m.r) / 2}" y="${f.h - 4}" text-anchor="middle" font-size="${f.fs}" fill="#55555b">${esc(t("axis_periods_millions"))}</text>`;
+    s += `<text x="${(m.l + f.w - m.r) / 2}" y="${f.h - 4}" text-anchor="middle" font-size="${f.fs}" fill="#4a4f58">${esc(t("axis_periods_millions"))}</text>`;
     s += refLines(y, m.l, f.w - m.r, f.fs);
     const pts = (key) => blocks.map((b) => `${x(b.t_start + b.n_periods / 2).toFixed(1)},${y(b[key]).toFixed(1)}`).join(" ");
     if (blocks.length) {
-      s += `<polyline points="${pts("price_firm2")}" fill="none" stroke="#a8480a" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round"/>`;
-      s += `<polyline points="${pts("price_firm1")}" fill="none" stroke="#1f5fa8" stroke-width="2" stroke-linejoin="round"/>`;
+      s += `<polyline points="${pts("price_firm2")}" fill="none" stroke="#c2410c" stroke-width="2" stroke-dasharray="6 4" stroke-linejoin="round"/>`;
+      s += `<polyline points="${pts("price_firm1")}" fill="none" stroke="#1d4e89" stroke-width="2" stroke-linejoin="round"/>`;
     }
-    s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${f.h - m.b}" stroke="#55555b"/>`;
-    s += `<line x1="${m.l}" x2="${f.w - m.r}" y1="${f.h - m.b}" y2="${f.h - m.b}" stroke="#55555b"/>`;
+    s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
+    s += `<line x1="${m.l}" x2="${f.w - m.r}" y1="${f.h - m.b}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
     el.innerHTML = s + "</svg>";
   }
 
@@ -120,9 +120,9 @@
     const x = scale(0, 16, m.l, f.w - m.r), y = scale(y0, y1, f.h - m.b, m.t);
     let s = svgOpen(f.w, f.h) + priceAxis(null, y, m.l, f.w - m.r, f.fs);
     for (let k = 0; k <= 15; k += (f.w < 420 ? 3 : 1)) {
-      s += `<text x="${x(k + 0.5)}" y="${f.h - m.b + 16}" text-anchor="middle" font-size="${f.fs}" fill="#55555b">${k}</text>`;
+      s += `<text x="${x(k + 0.5)}" y="${f.h - m.b + 16}" text-anchor="middle" font-size="${f.fs}" fill="#4a4f58">${k}</text>`;
     }
-    s += `<text x="${(m.l + f.w - m.r) / 2}" y="${f.h - 4}" text-anchor="middle" font-size="${f.fs}" fill="#55555b">${esc(t("axis_tau"))}</text>`;
+    s += `<text x="${(m.l + f.w - m.r) / 2}" y="${f.h - 4}" text-anchor="middle" font-size="${f.fs}" fill="#4a4f58">${esc(t("axis_tau"))}</text>`;
     s += refLines(y, m.l, f.w - m.r, f.fs);
     const d = S.dev;
     if (d) {
@@ -135,22 +135,22 @@
         }
         return p;
       };
-      s += `<path d="${step(d.control.price, 0, 16)}" fill="none" stroke="#7d7d84" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>`;
-      s += `<path d="${step(d.control.price, 1, 16)}" fill="none" stroke="#7d7d84" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>`;
-      s += `<path d="${step(d.deviation.price, 1, n)}" fill="none" stroke="#a8480a" stroke-width="2.5" stroke-dasharray="6 4"/>`;
-      s += `<path d="${step(d.deviation.price, 0, n)}" fill="none" stroke="#1f5fa8" stroke-width="2.5"/>`;
+      s += `<path d="${step(d.control.price, 0, 16)}" fill="none" stroke="#7a7e86" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>`;
+      s += `<path d="${step(d.control.price, 1, 16)}" fill="none" stroke="#7a7e86" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>`;
+      s += `<path d="${step(d.deviation.price, 1, n)}" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 4"/>`;
+      s += `<path d="${step(d.deviation.price, 0, n)}" fill="none" stroke="#1d4e89" stroke-width="2.5"/>`;
       // anotações em sequência
       const ann = (k, row, key) => {
         const xx = x(k).toFixed(1), yy = m.t - 6 - row * (f.fs + 4);
-        return `<line x1="${xx}" x2="${xx}" y1="${yy + 4}" y2="${f.h - m.b}" stroke="#3f3f44" stroke-width="1" stroke-dasharray="3 3"/>` +
-          `<text x="${xx}" y="${yy}" font-size="${f.fs}" fill="#1c1c1e" text-anchor="${k > 11 ? "end" : "start"}" dx="${k > 11 ? -3 : 3}">${esc(t(key))}</text>`;
+        return `<line x1="${xx}" x2="${xx}" y1="${yy + 4}" y2="${f.h - m.b}" stroke="#17202a" stroke-width="1" stroke-dasharray="3 3"/>` +
+          `<text x="${xx}" y="${yy}" font-size="${f.fs + 1}" font-family="Newsreader, Georgia, serif" font-style="italic" fill="#17202a" text-anchor="${k > 11 ? "end" : "start"}" dx="${k > 11 ? -3 : 3}">${esc(t(key))}</text>`;
       };
       if (n > 1 && d.did_deviate) s += ann(1, 2, "ann_cut");
       if (n > 2 && d.did_deviate) s += ann(2, 1, d.R <= -0.02 ? "ann_react" : "ann_noreact");
       if (d.V !== null && n > d.V && d.did_deviate) s += ann(d.V, 0, "ann_back");
     }
-    s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${f.h - m.b}" stroke="#55555b"/>`;
-    s += `<line x1="${m.l}" x2="${f.w - m.r}" y1="${f.h - m.b}" y2="${f.h - m.b}" stroke="#55555b"/>`;
+    s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
+    s += `<line x1="${m.l}" x2="${f.w - m.r}" y1="${f.h - m.b}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
     el.innerHTML = s + "</svg>";
   }
 
@@ -166,18 +166,18 @@
     let s = svgOpen(w, h);
     for (let v = 0.5; v <= 1.0001; v += 0.1) {
       const xx = x(v).toFixed(1);
-      s += `<line x1="${xx}" x2="${xx}" y1="${top}" y2="${h - bottom}" stroke="#ece9e2"/>`;
-      s += `<text x="${xx}" y="${h - bottom + 16}" text-anchor="middle" font-size="${fs}" fill="#55555b">${esc(num(v, 1))}</text>`;
+      s += `<line x1="${xx}" x2="${xx}" y1="${top}" y2="${h - bottom}" stroke="#e9e7e1"/>`;
+      s += `<text x="${xx}" y="${h - bottom + 16}" text-anchor="middle" font-size="${fs}" fill="#4a4f58">${esc(num(v, 1))}</text>`;
     }
-    s += `<text x="${(m.l + w - m.r) / 2}" y="${h - 4}" text-anchor="middle" font-size="${fs}" fill="#55555b">Δ</text>`;
+    s += `<text x="${(m.l + w - m.r) / 2}" y="${h - 4}" text-anchor="middle" font-size="${fs}" fill="#4a4f58">Δ</text>`;
     rows.forEach((r, i) => {
       const y0 = top + i * rowH;
-      s += `<text x="${m.l}" y="${y0 + fs}" font-size="${fs}" fill="#1c1c1e">${esc(t(condKey(r.level)))}</text>`;
+      s += `<text x="${m.l}" y="${y0 + fs}" font-size="${fs}" fill="#17202a">${esc(t(condKey(r.level)))}</text>`;
       const yW = y0 + fs + 10, yO = yW + 11;
-      s += `<line x1="${x(r.delta_k1_lo)}" x2="${x(r.delta_k1_hi)}" y1="${yW}" y2="${yW}" stroke="#1f5fa8" stroke-width="2"/>`;
-      s += `<circle cx="${x(r.delta_k1)}" cy="${yW}" r="5" fill="#1f5fa8"/>`;
-      s += `<line x1="${x(r.delta_k0_lo)}" x2="${x(r.delta_k0_hi)}" y1="${yO}" y2="${yO}" stroke="#a8480a" stroke-width="2"/>`;
-      s += `<rect x="${x(r.delta_k0) - 4.5}" y="${yO - 4.5}" width="9" height="9" fill="#fff" stroke="#a8480a" stroke-width="2.5"/>`;
+      s += `<line x1="${x(r.delta_k1_lo)}" x2="${x(r.delta_k1_hi)}" y1="${yW}" y2="${yW}" stroke="#1d4e89" stroke-width="2"/>`;
+      s += `<circle cx="${x(r.delta_k1)}" cy="${yW}" r="5" fill="#1d4e89"/>`;
+      s += `<line x1="${x(r.delta_k0_lo)}" x2="${x(r.delta_k0_hi)}" y1="${yO}" y2="${yO}" stroke="#c2410c" stroke-width="2"/>`;
+      s += `<rect x="${x(r.delta_k0) - 4.5}" y="${yO - 4.5}" width="9" height="9" fill="#fbfbf8" stroke="#c2410c" stroke-width="2.5"/>`;
     });
     el.innerHTML = s + "</svg>";
   }
@@ -299,6 +299,24 @@
     $("lim-3").textContent = t("lim_3", { rand: num(R.learning_trajectory.delta_random_prices.value, 2) });
     $("cite-text").textContent = t("cite_text", { repo: I.LINKS.repo });
     $("updated").textContent = t("updated", { date: I.date(R.meta.generated) });
+    $("author-updated").textContent = t("author_updated", { date: I.date(R.meta.generated) });
+
+    // Tabela 1: resultados do projeto × artigo original (tudo lido do JSON, que vem de results/)
+    const T = R.targets_calvano, sep0 = R.separation_test.rows.find((x) => x.level === "beta4e-06");
+    const rowsT = [
+      ["row_delta", num(base.delta_mean, 3), num(T.delta_mean.value, 3)],
+      ["row_nash", num(R.best_response.nash_share, 3), num(T.nash_share.value, 3)],
+      ["row_react", num(R.deviation.R_mean, 3), num(T.rival_reaction_tau2.value, 3)],
+      ["row_unprof", num(R.deviation.share_unprofitable, 3), num(T.unprofitable_deviation_share.value, 3)],
+      ["row_punish", num(R.deviation.V_mean_uncensored, 1), num(T.punishment_periods.value, 1)],
+      ["row_memoryless", num(sep0.delta_k0, 3), t("not_reported"), true],
+    ];
+    $("tab1").innerHTML = `<caption><strong>${esc(t("tab1_caption"))}</strong></caption>` +
+      `<thead><tr><th scope="col">${esc(t("th_measure"))}</th><th scope="col" class="num">${esc(t("th_project"))}</th><th scope="col" class="num">${esc(t("th_paper"))}</th></tr></thead><tbody>` +
+      rowsT.map((r) => `<tr><th scope="row">${esc(t(r[0]))}</th><td class="num${r[3] ? " em" : ""}">${esc(r[1])}</td><td class="num">${esc(r[2])}</td></tr>`).join("") +
+      "</tbody>";
+    $("tab1-note").textContent = t("tab1_note", {
+      proj: num(R.deviation.share_unprofitable, 3), paper: num(T.unprofitable_deviation_share.value, 3) });
   }
 
   function renderAll() {
