@@ -211,6 +211,8 @@
     let outcome = "";
     if (done && S.final.converged) {
       outcome = S.final.cycle_len > 1 ? t("outcome_cycle", { n: S.final.cycle_len }) : t("outcome_constant");
+      // tempo de cálculo da sessão ao vivo (para medir no celular, Fase 2.5)
+      if (S.mode === "live" && S.final.ms !== undefined) outcome += " " + t("compute_time", { s: num(S.final.ms / 1000, 2) });
     } else if (!done && shownBlocks > 0) {
       const b = S.blocks[shownBlocks - 1];
       outcome = t(S.paused ? "status_paused" : "status_learning",
@@ -365,7 +367,7 @@
         startAnim();
       } else if (msg.type === "done" && msg.runId === S.runId) {
         const r = msg.result, m = S.mk.m;
-        S.final = { converged: r.converged, periods: r.periods, delta: r.delta, cycle_len: r.cycle_len,
+        S.final = { converged: r.converged, periods: r.periods, delta: r.delta, cycle_len: r.cycle_len, ms: msg.ms,
                     greedy: Int32Array.from(r.greedy),
                     cycle: r.cycle_idx ? r.cycle_idx.map((p) => p[0] * m + p[1]) : [] };
         startAnim();

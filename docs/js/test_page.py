@@ -80,6 +80,8 @@ with sync_playwright() as p:
     check("sessão ao vivo converge e libera o desvio", "navegador" in src, src)
     st = pg.inner_text("#status")
     check("status da sessão ao vivo", "milhões de períodos" in st, st)
+    oc = pg.inner_text("#outcome")
+    check("tempo de cálculo mostrado na sessão ao vivo", re.search(r"Calculado em \d+,\d\d s", oc), oc)
     pg.click("#btn-deviate")
     pg.wait_for_function("document.getElementById('score-back').textContent !== '–'", timeout=20000)
     check("desvio forçado na sessão ao vivo preenche o placar", pg.inner_text("#verdict").strip() != "")
