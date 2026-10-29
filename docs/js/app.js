@@ -198,6 +198,15 @@
     $("learn-table").innerHTML = table([t("th_periods"), t("th_price_a"), t("th_price_b"), t("th_delta_block")], rows, 1);
   }
 
+  // Alternativa em texto da Figura 2 (WCAG 1.1.1): preços dos dois ramos, τ = 0 a 15.
+  function renderDevTable() {
+    const d = S.dev;
+    if (!d) { $("dev-table").innerHTML = ""; return; }
+    const rows = d.tau.map((k) => [String(k), num(d.deviation.price[k][0], 3), num(d.deviation.price[k][1], 3),
+      num(d.control.price[k][0], 3), num(d.control.price[k][1], 3)]);
+    $("dev-table").innerHTML = table([t("th_tau"), t("th_a_cut"), t("th_b_cut"), t("th_a_nocut"), t("th_b_nocut")], rows, 1);
+  }
+
   function renderSide() {
     const shownBlocks = Math.floor(S.shown);
     const done = S.final && shownBlocks >= S.blocks.length;
@@ -228,14 +237,15 @@
   }
   function convergedStatus() {
     const f = S.final;
-    const vars = { periods: num(f.periods / 1e6, 2), delta: num(f.delta, 2) };
+    const mi = f.periods / 1e6;
+    const vars = { periods: num(mi, 2), delta: num(f.delta, 2), mi: t(mi < 2 ? "million_one" : "million_many") };
     if (!f.converged) return ["status_not_converged", vars];
     return [f.delta >= 0.9 ? "status_converged_high" : f.delta <= 0.1 ? "status_converged_low" : "status_converged_mid", vars];
   }
 
   function renderButtons() {
     const run = $("btn-run");
-    const learning = S.mode === "live" && !(S.final && S.shown >= S.blocks.length);
+    const learning = !(S.final && S.shown >= S.blocks.length);
     run.textContent = t(learning ? (S.paused ? "btn_resume" : "btn_pause") : "btn_run");
     const canDeviate = !!(S.final && S.final.converged && S.shown >= S.blocks.length);
     $("btn-deviate").disabled = !canDeviate;
@@ -325,7 +335,7 @@
     I.apply();
     const other = I.getLang() === "pt" ? "en" : "pt";
     $("lang-btn-text").setAttribute("lang", other === "en" ? "en" : "pt-BR");
-    renderStatic(); renderSide(); renderButtons(); renderScore(); renderLearnTable();
+    renderStatic(); renderSide(); renderButtons(); renderScore(); renderLearnTable(); renderDevTable();
     if (S.statusKey) $("status").textContent = t(S.statusKey, S.statusVars);
     $("dev-cycle-note").hidden = !(S.final && S.final.cycle_len > 1);
     drawLearning(); drawDeviation(); drawSeparation();
@@ -396,7 +406,7 @@
     S.paused = false; S.running = true;
     workerRun += 1; S.runId = workerRun;
     w.postMessage({ type: "start", seed: seed });
-    S.dev = null; S.devShown = 16; clearTimeout(S.devTimer);
+    S.dev = null; S.devShown = 16; clearTimeout(S.devTimer); renderDevTable();
     setStatus("status_computing");
     renderSide(); renderButtons(); renderScore(); drawLearning(); drawDeviation();
     $("dev-cycle-note").hidden = true;
@@ -418,6 +428,7 @@
     S.dev = D.run(S.mk, f.greedy, f.cycle, 0, S.params.learning.delta.value);
     clearTimeout(S.devTimer);
     S.devShown = animate && !reduceMotion ? 1 : 16;
+    renderDevTable();
     const stepAnim = () => {
       drawDeviation(); renderScore();
       if (S.devShown < 16) { S.devShown += 1; S.devTimer = setTimeout(stepAnim, TAU_MS); }
@@ -432,15 +443,22 @@
     return 1 + (a[0] % 999999);
   }
 
+  // Botão principal: reproduz o aprendizado da sessão mostrada (gravada ou ao vivo), sem
+  // recalcular; durante a animação vira Pausar/Continuar. Sessão nova ao vivo: botão "Nova sessão".
   function onRun() {
-    const learning = S.mode === "live" && !(S.final && S.shown >= S.blocks.length);
-    if (!learning) { startLive(S.seed); return; }
+    const learning = !(S.final && S.shown >= S.blocks.length);
+    if (!learning) {
+      S.shown = 0; S.paused = false;
+      setStatus(null); renderButtons(); renderSide(); startAnim();
+      return;
+    }
     S.paused = !S.paused;
     if (S.paused) {
       const b = S.blocks[Math.max(0, Math.floor(S.shown) - 1)];
       setStatus("status_paused", { t: num(b ? (b.t_start + b.n_periods) / 1e3 : 0, 0) });
     } else {
-      setStatus("status_computing"); startAnim();
+      // replay de sessão já calculada: nada a calcular; sessão ao vivo em cálculo: "Calculando…"
+      setStatus(S.final ? null : "status_computing"); startAnim();
     }
     renderSide(); renderButtons();
   }
