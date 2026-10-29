@@ -118,6 +118,8 @@ blocks_all = read_csv("qlearning_trajectory_blocks.csv")
 ex_rows = read_csv("qlearning_trajectory_examples.csv")
 dev_paths = read_csv("qlearning_deviation_paths.csv")
 tests_table = read_csv("qlearning_mandatory_tests_table.csv")
+sep_table = read_csv("qlearning_separation_table.csv")
+sep_meta = read_json("qlearning_separation_meta.json")
 
 checks = {}
 
@@ -419,7 +421,19 @@ reference = {
                                 "igual ao teste de sanidade da Fase 1.1 (0,4974) [I]"},
     },
     "mandatory_tests": [{k: num(v) for k, v in x.items()} for x in tests_table],
+    # Fase 1.8 (teste de separação), só lido de results/qlearning_separation_table.csv e
+    # _meta.json: Δ com e sem memória sob a mesma exploração; mostrado no simulador perto do
+    # teste do desvio (decisão de 16/10/2026).
+    "separation_test": {
+        "rule": sep_meta.get("rule"),
+        "decision": sep_meta.get("decision"),
+        "rows": [{k: (v if k == "level" else num(v)) for k, v in x.items()} for x in sep_table],
+    },
 }
+checks["separacao_igual_results"] = (
+    len(reference["separation_test"]["rows"]) == len(sep_table) == 7
+    and all(x["n_k0"] == 1000 and x["n_k1"] == 1000 for x in reference["separation_test"]["rows"])
+    and reference["separation_test"]["decision"] == sep_meta["decision"])
 checks["referencia_igual_results"] = (
     abs(np.mean(reference["all_sessions"]["delta"]) - bs["delta_mean"]) < 1e-12
     and len(reference["all_sessions"]["seed"]) == 1000

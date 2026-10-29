@@ -44,3 +44,24 @@ jobs:
         run: node docs/js/test_engine.js
       - name: Motor × reimplementação independente (17 conferências)
         run: node docs/js/test_engine_independent.js
+      - name: Teste do desvio em JS × Python (12 conferências)
+        run: node docs/js/test_deviation.js
+      - name: Textos em português e inglês (7 conferências)
+        run: node docs/js/test_i18n.js
+
+  page:
+    name: Página no navegador (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Instalar Playwright e Chromium
+        run: |
+          pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Página em português e inglês, ao vivo, desvio, celular e acessibilidade
+        env: {PYTHONIOENCODING: utf-8}
+        run: python docs/js/test_page.py
