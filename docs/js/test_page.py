@@ -237,7 +237,7 @@ with sync_playwright() as p:
 
     # falha do worker: volta à sessão gravada com aviso, e um 2º clique não trava em "Calculando"
     ctx = b.new_context(viewport={"width": 1000, "height": 800}); pg = ctx.new_page()
-    pg.route("**/qlearning.worker.js", lambda route: route.fulfill(status=404, body=""))
+    pg.route("**/qlearning.worker.js*", lambda route: route.fulfill(status=404, body=""))
     pg.goto(URL + "?lang=en"); pg.wait_for_selector("body[data-ready='1']")
     ok = True
     for _ in range(2):
@@ -256,7 +256,7 @@ with sync_playwright() as p:
         loads["n"] += 1
         if loads["n"] == 1: route.fulfill(status=404, body="")
         else: route.continue_()
-    pg.route("**/qlearning.worker.js", flaky)
+    pg.route("**/qlearning.worker.js*", flaky)
     pg.goto(URL + "?lang=en"); pg.wait_for_selector("body[data-ready='1']")
     pg.click("#btn-new")
     pg.wait_for_function("document.getElementById('status').textContent.includes('could not run')", timeout=10000)
