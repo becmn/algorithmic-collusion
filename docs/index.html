@@ -7,7 +7,7 @@
   <meta name="description" content="Simulador no navegador: dois algoritmos de preço que nunca se comunicaram aprendem a cobrar acima do preço competitivo (duopólio de Calvano et al., 2020).">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preload" href="fonts/newsreader-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=20261030b">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Dois algoritmos de preço que nunca se comunicaram aprenderam a cobrar acima do preço competitivo">
   <meta property="og:description" content="Simulador no navegador do duopólio de Calvano et al. (2020), em português e inglês: aprendizado ao vivo, teste do desvio e comparação com algoritmos sem memória.">
@@ -258,9 +258,11 @@
     </div>
   </footer>
 
-  <script src="js/i18n.js"></script>
-  <script src="js/engine.js"></script>
-  <script src="js/deviation.js"></script>
-  <script src="js/app.js"></script>
+  <!-- ?v=… muda a cada versão: força o navegador a baixar os arquivos novos (sem isso, o
+       GitHub Pages deixa o navegador usar a cópia antiga por até 10 minutos) -->
+  <script src="js/i18n.js?v=20261030b"></script>
+  <script src="js/engine.js?v=20261030b"></script>
+  <script src="js/deviation.js?v=20261030b"></script>
+  <script src="js/app.js?v=20261030b"></script>
 </body>
 </html>
