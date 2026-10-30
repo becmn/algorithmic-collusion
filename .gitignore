@@ -218,3 +218,12 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Fase 3: textos de Fish et al. colados localmente (licença do arXiv; não publicar) e saídas de teste
+llm/prompts/local/
+results/llm_fake/
+# logs completos das chamadas: contêm os textos de Fish (não publicar) e são grandes;
+# guardar com backup local; no Git ficam config, state, periods e os resumos
+results/llm*/**/calls.jsonl
+results/llm*/**/*.tmp
+results/llm_spend.tmp

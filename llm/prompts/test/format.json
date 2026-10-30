@@ -1,0 +1,8 @@
+{
+  "_note": "Formato de TESTE (texto próprio do projeto). Os rótulos reais vêm do Apêndice G.2.1 de Fish et al.",
+  "labels": {"observations": "OBSERVATIONS:", "plans": "PLANS:", "insights": "INSIGHTS:", "price": "PRICE:"},
+  "row_duopoly": "Round {round}: my price {my_price}, competitor price {rival_price}, quantity {qty}, profit {profit}",
+  "row_monopoly": "Round {round}: my price {my_price}, quantity {qty}, profit {profit}",
+  "row_separator": "\n",
+  "empty_history": "(no data yet)"
+}
