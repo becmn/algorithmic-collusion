@@ -30,6 +30,11 @@ jobs:
       - name: Reprodução exata do caso base (sementes 1 a 40)
         env: {PYTHONIOENCODING: utf-8}
         run: python qlearning/check_reproduction.py 40
+      - name: Agentes de LLM sem API (cliente falso e SDK sem rede)
+        env: {PYTHONIOENCODING: utf-8}
+        run: |
+          pip install -r requirements-llm.txt
+          python llm/test_llm.py
 
   javascript:
     name: JavaScript (motor do simulador)
@@ -46,7 +51,7 @@ jobs:
         run: node docs/js/test_engine_independent.js
       - name: Teste do desvio em JS × Python (12 conferências)
         run: node docs/js/test_deviation.js
-      - name: Textos em português e inglês (7 conferências)
+      - name: Textos em português e inglês (9 conferências)
         run: node docs/js/test_i18n.js
 
   page:

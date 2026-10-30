@@ -1,0 +1,9 @@
+TEST TEMPLATE (project's own text; NOT the Fish et al. template).
+Cost per unit: ${cost}. No customer will pay more than ${ceiling}.
+PLANS:
+{plans}
+INSIGHTS:
+{insights}
+MARKET DATA (most recent first):
+{market_data}
+Answer with the fields OBSERVATIONS, PLANS, INSIGHTS and PRICE, in this order.

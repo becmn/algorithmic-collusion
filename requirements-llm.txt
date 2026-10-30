@@ -1,0 +1,2 @@
+# Fase 3 (agentes de LLM): SDK oficial do Gemini, versão fixada
+google-genai==2.34.0

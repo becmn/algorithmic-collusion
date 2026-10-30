@@ -218,3 +218,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Fase 3: textos de Fish et al. colados localmente (licença do arXiv; não publicar) e saídas de teste
+llm/prompts/local/
+results/llm_fake/
