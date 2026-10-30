@@ -19,7 +19,7 @@
     params: null, ref: null, sessions: null, mk: null,
     mode: "recorded",   // "recorded" | "live"
     seed: null, blocks: [], shown: 0, final: null,
-    memory: "with",     // "with" (memória de 1 período) | "without" (sessão gravada sem memória)
+    memory: "with",     // "with" (memória de 1 período) | "without" (sem memória: gravada e ao vivo)
     k0: null,           // qlearning_memoryless.json
     running: false, paused: false, worker: null, runId: 0,
     dev: null, devShown: NT, devTimer: null, statusKey: null, statusVars: null,
@@ -515,8 +515,9 @@
       : t("aggregate", { n: num(base.n_sessions, 0), mean: num(base.delta_mean, 2),
                          lo: num(bt.delta_ci_lo, 2), hi: num(bt.delta_ci_hi, 2) });
     const cls = R.deviation.classes["theta_0.02"];
-    $("dev-aggregate").textContent = t("dev_aggregate", { n: num(base.n_sessions, 0),
+    const devAgg = t("dev_aggregate", { n: num(base.n_sessions, 0),
       a: num(cls.A / base.n_sessions * 100, 0), u: num(R.deviation.share_unprofitable * 100, 0) });
+    $("dev-aggregate").textContent = S.memory === "without" ? t("dev_aggregate_k0") + " " + devAgg : devAgg;
     $("dev-caveat").innerHTML = esc(t("dev_caveat", { ref: "\u0000" })).replace("\u0000",
       `<a href="${I.LINKS.denboer}" rel="noopener" target="_blank">${esc(t("ref_denboer"))}</a>`);
     // Figura 3: resultado em destaque (parâmetros do artigo) e as condições recolhidas
@@ -555,8 +556,10 @@
       pN: num(rp.price_nash, 4), pM: num(rp.price_monopoly, 4) });
     $("lim-3").textContent = t("lim_3", { rand: num(R.learning_trajectory.delta_random_prices.value, 2) });
     $("cite-text").textContent = t("cite_text", { repo: I.LINKS.repo });
-    $("updated").textContent = t("updated", { date: I.date(R.meta.generated) });
-    $("author-updated").textContent = t("author_updated", { date: I.date(R.meta.generated) });
+    // data dos dados = a mais recente entre os JSON mostrados na página
+    const lastGen = [R.meta.generated, S.params.meta.generated, S.sessions.meta.generated, S.k0.meta.generated].sort().pop();
+    $("updated").textContent = t("updated", { date: I.date(lastGen) });
+    $("author-updated").textContent = t("author_updated", { date: I.date(lastGen) });
 
     // Tabela 1: resultados do projeto × artigo original (tudo lido do JSON, que vem de results/)
     const T = R.targets_calvano, sep0 = R.separation_test.rows.find((x) => x.level === "beta4e-06");
@@ -770,6 +773,7 @@
           m: () => num(p.learning.m.value, 0),
           horizon: () => num(r.deviation.protocol.horizon, 0),
           nrec: () => num(s.sessions.length, 0),
+          nk0: () => num(r.separation_test.rows.find((x) => x.level === "beta4e-06").n_k0, 0),
         });
         if (r.deviation.protocol.horizon !== D.T_DEV) console.error("horizonte do desvio: JSON ≠ deviation.js");
         $("btn-run").addEventListener("click", onRun);

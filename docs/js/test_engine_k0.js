@@ -13,6 +13,7 @@
  *      a 6 casas nos dois lados: Δ sem memória tem poucos valores distintos e diferenças na 10ª casa
  *      fariam valores iguais parecerem diferentes).
  *   3. A estratégia final copiada para os 225 estados faz a rival não reagir ao corte.
+ *   4. A sessão sem memória gravada: o corte calculado na página é igual ao gravado no Python.
  * Código próprio do projeto.
  */
 "use strict";
@@ -109,6 +110,18 @@ const cyc = [r.cycle_idx[0][0] * m + r.cycle_idx[0][1]];
 const dv = D.run(mk, r.greedy, cyc, 0, mk.delta);
 check("sem memória, a rival não reage ao corte (R = 0)",
   dv.R === 0 && dv.deviation.idx.slice(1).every((st, k) => st[1] === dv.control.idx[k + 1][1]));
+
+// ---------------------------------------------------------------- 4. sessão gravada sem memória
+// o teste do corte que a página calcula (deviation.js) = o gravado no Python (export_memoryless.py)
+const K0 = JSON.parse(fs.readFileSync(path.join(ROOT, "docs", "data", "qlearning_memoryless.json"), "utf8")).session;
+const gK = Int32Array.from([...K0.greedy_strategy.firm1, ...K0.greedy_strategy.firm2]);
+const dK = D.run(mk, gK, [K0.cycle_idx[0][0] * m + K0.cycle_idx[0][1]], 0, mk.delta);
+const T = K0.deviation_test;
+const close = (a, b) => a.every((v, k) => Math.abs(v - b[k]) < 1e-6);
+check("sessão sem memória gravada: corte na página = corte do Python (preços, R e G)",
+  close(dK.deviation.price.map((p) => p[0]), T.deviation_price_firm1) && close(dK.deviation.price.map((p) => p[1]), T.deviation_price_firm2)
+  && close(dK.control.price.map((p) => p[0]), T.control_price_firm1) && close(dK.control.price.map((p) => p[1]), T.control_price_firm2)
+  && Math.abs(dK.R - T.R) < 1e-9 && Math.abs(dK.G - T.G) < 1e-6);
 
 console.log("Conferências:");
 for (const [name, ok] of checks) console.log(`  ${ok ? "True " : "False"}  ${name}`);

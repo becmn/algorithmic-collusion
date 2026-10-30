@@ -192,6 +192,9 @@ with sync_playwright() as p:
           re.match(r"^0,9\d$", pg.inner_text("#delta-value")) and "sem memória" in pg.inner_text("#aggregate"))
     pg.click("#btn-deviate")
     pg.wait_for_function("document.getElementById('score-back').textContent !== '–'", timeout=20000)
+    check("sem memória: o resumo do corte não fala de reação (só com memória)",
+          pg.inner_text("#dev-aggregate").startswith("Sem memória, nenhuma rival") and "com memória" in pg.inner_text("#dev-aggregate")
+          and pg.inner_text("#dev-caveat").startswith("Com memória"))
     check("sem memória: no corte a rival não reage (0,0%) e a nota explica",
           pg.inner_text("#score-react").startswith("0,0") and pg.is_visible("#dev-mem-note"), pg.inner_text("#score-react"))
     # sessão ao vivo sem memória
