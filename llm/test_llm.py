@@ -79,7 +79,6 @@ for bad in ["", "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c", "PLANS: b\nOBSERVATION
 check("respostas inválidas recusadas (vazia, sem preço, fora de ordem, não numérico, ≤ 0)", bad_ok)
 strict = True
 for bad in ["OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: 1,85",       # vírgula decimal: ambíguo
-            "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: 1.",         # cortado
             "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: about 1.8"]: # texto antes do número
     try:
         parse_response(ps, bad)
@@ -91,7 +90,10 @@ try:
     strict = False
 except InvalidResponse:
     pass
-check("leitor estrito: recusa vírgula decimal, número cortado, texto antes do preço e resposta cortada (MAX_TOKENS)", strict)
+check("leitor estrito: recusa vírgula decimal, texto antes do preço e resposta cortada (MAX_TOKENS)", strict)
+oks = [parse_response(ps, "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: " + v)["price_value"]
+       for v in ("$1.85.", "1.85 dollars", "**1.85**", "1.85\n")]
+check("leitor aceita ponto final, unidade depois do número e negrito", oks == [1.85] * 4, oks)
 tricky = ("OBSERVATIONS: my plans: hold\nPLANS: b\nINSIGHTS: competitor price: 1.7 seems low\n"
           "**PRICE:** 1.9")
 r2 = parse_response(ps, tricky)

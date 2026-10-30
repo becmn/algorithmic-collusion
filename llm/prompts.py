@@ -119,8 +119,9 @@ def user_prompt(ps: PromptSet, *, cost: float, ceiling: float, plans: str, insig
 # Leitura da resposta
 # ---------------------------------------------------------------------------
 # Preço: só o número no começo do campo, com $ opcional e separador de milhar em grupos de 3.
-# Recusa "1," / "1." (resposta cortada) e "1,85" (vírgula decimal: ambíguo).
-PRICE = re.compile(r"\s*\$?\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)(?![\d.,])")
+# Recusa "1,85" (vírgula decimal: ambíguo); aceita ponto final ("1.85."). Resposta cortada é
+# recusada pelo finish_reason (diferente de STOP).
+PRICE = re.compile(r"\s*\$?\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)(?!\d|[.,]\d)")
 
 
 class InvalidResponse(ValueError):
