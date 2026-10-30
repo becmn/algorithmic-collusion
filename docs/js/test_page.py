@@ -55,6 +55,16 @@ with sync_playwright() as p:
         check(f"[{lang}] gráficos desenhados", pg.evaluate("['learn-chart','dev-chart','sep-chart'].every(i => document.querySelector('#'+i+' svg polyline, #'+i+' svg path, #'+i+' svg circle'))"))
         check(f"[{lang}] Δ da sessão gravada mostrado", re.match(r"^0[.,]8\d$", pg.inner_text("#delta-value")), pg.inner_text("#delta-value"))
         check(f"[{lang}] placar do desvio preenchido", pg.inner_text("#verdict").strip() != "")
+        if lang == "pt":
+            # resultado de B igual ao calculado com os lucros gravados no Python (semente 48, ponto 0)
+            import json as _j
+            ss = _j.loads((DOCS / "data" / "qlearning_sessions.json").read_text(encoding="utf-8"))
+            s0 = [x for x in ss["sessions"] if x["opens_page"]][0]["deviation_test"]["starts"][0]
+            pc, pv = s0["control"]["profit_firm2"], s0["deviation"]["profit_firm2"]
+            wts = [0.95 ** (k - 1) for k in range(1, len(pc))]
+            gb = sum(w_ * (pv[k] - pc[k]) for w_, k in zip(wts, range(1, len(pc)))) / sum(w_ * pc[k] for w_, k in zip(wts, range(1, len(pc))))
+            exp_txt = f"B lucrou {abs(gb) * 100:.1f}".replace(".", ",") + (" % a menos" if gb < 0 else " % a mais").replace(" %", "%")
+            check("resultado de B no placar igual ao do Python", exp_txt in pg.inner_text("#verdict"), (exp_txt, pg.inner_text("#verdict")))
         check(f"[{lang}] tabela 1 com 7 linhas de resultados", pg.evaluate("document.querySelectorAll('#tab1 tbody tr').length") == 7)
         check(f"[{lang}] tabela 1 traz as duas versões do teste de Nash",
               ("qualquer desvio" if lang == "pt" else "any deviation") in pg.inner_text("#tab1"))

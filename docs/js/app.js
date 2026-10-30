@@ -471,6 +471,18 @@
     $("dev-mem-note").hidden = S.memory !== "without";
   }
 
+  // Ganho descontado da firma B com o corte de A, na mesma fórmula do G (τ = 1 a 15, peso δ^(τ−1)).
+  function rivalGain(d) {
+    const m = S.mk.m, PI = S.mk.PI, delta = S.params.learning.delta.value;
+    let num_ = 0, den = 0, w = 1;
+    for (let k = 1; k < NT; k++) {
+      const c = d.control.idx[k], v = d.deviation.idx[k];
+      const pc = PI[(c[0] * m + c[1]) * 2 + 1], pv = PI[(v[0] * m + v[1]) * 2 + 1];
+      num_ += w * (pv - pc); den += w * pc; w *= delta;
+    }
+    return num_ / den;
+  }
+
   function renderScore() {
     const d = S.dev;
     if (!d) { ["score-react", "score-back", "score-profit"].forEach((id) => { $(id).textContent = "–"; }); $("verdict").textContent = ""; return; }
@@ -482,8 +494,14 @@
     let v = "";
     if (finished) {
       if (!d.did_deviate) v = t("verdict_none");
-      else if (d.G < 0) v = t("verdict_unprofitable", { g: num(-d.G * 100, 1) });
-      else v = t("verdict_profitable", { g: num(d.G * 100, 1) });
+      else {
+        v = d.G < 0 ? t("verdict_unprofitable", { g: num(-d.G * 100, 1) }) : t("verdict_profitable", { g: num(d.G * 100, 1) });
+        // B no mesmo cálculo (lucro descontado em 15 períodos, com × sem corte); descritivo: a
+        // pergunta do Protocolo ("o corte compensou?") é só sobre quem cortou (G de A).
+        const gb = rivalGain(d);
+        v += " " + (Math.abs(gb) < 5e-4 ? t("verdict_b_same")
+          : t(gb < 0 ? "verdict_b_less" : "verdict_b_more", { g: num(Math.abs(gb) * 100, 1) }));
+      }
     }
     $("verdict").textContent = v;
   }
