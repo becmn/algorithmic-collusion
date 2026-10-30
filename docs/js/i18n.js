@@ -257,7 +257,7 @@
       tab1_note: "The gap in cuts that did not pay off ({proj} versus {paper}) remains unexplained: the paper does not describe the exact calculation. In the “any deviation” row, a firm may deviate for any number of periods (optimal best response); under this stricter rule, {anyn} of the {n} sessions are in Nash equilibrium on path. Every number in the “This project” column comes from a file in results/ in the repository; the other column comes from the paper.",
       about_h2: "About this project",
       about_p1: "This simulator is the first part of a project that replicates the Calvano et al. (2020) experiment and, in the next phase, applies the same measures, the Δ index and the deviation test, to language-model (LLM) agents.",
-      about_p2: "Methodological choices were recorded before the tests were run, including the rule that decided the conclusion's wording. Code, data and automated tests are in the repository.",
+      about_p2: "Methodological choices were recorded before the tests were run, including the rule that set the conclusion's wording. Code, data and automated tests are in the repository.",
       about_stack: "Python and numba for the {nsess} sessions · JavaScript in the browser, validated against Python.",
       footer_fonts: "Newsreader and Public Sans typefaces (SIL Open Font License).",
       nav_method: "Method",

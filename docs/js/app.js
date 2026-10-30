@@ -377,6 +377,7 @@
     if (S.worker) return S.worker;
     const w = new Worker("js/qlearning.worker.js");
     w.onmessage = (ev) => {
+      if (S.worker !== w) return;   // mensagem atrasada de um worker já descartado
       const msg = ev.data;
       if (msg.type === "blocks" && msg.runId === S.runId) {
         Array.prototype.push.apply(S.blocks, msg.blocks);
@@ -391,7 +392,7 @@
         workerFailed(msg.message);
       }
     };
-    w.onerror = (e) => { e.preventDefault(); workerFailed(e.message || "Worker"); };
+    w.onerror = (e) => { e.preventDefault(); if (S.worker !== w) return; workerFailed(e.message || "Worker"); };
     w.postMessage({ type: "init", params: S.params });
     S.worker = w;
     workerRun = 0;   // o worker novo conta as sessões a partir de 1; a página acompanha
