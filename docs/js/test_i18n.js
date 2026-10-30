@@ -44,6 +44,13 @@ const ref = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "qlear
 const condMissing = ref.separation_test.rows.map((r) => "cond_" + r.level.replace(/[-.]/g, "_")).filter((k) => !(k in pt));
 check("há texto para todas as condições do teste de separação", !condMissing.length, condMissing);
 
+// horizonte do teste do desvio: o do JSON (results/) tem de ser o de deviation.js
+check("horizonte do desvio igual no JSON e em deviation.js", ref.deviation.protocol.horizon === require("./deviation.js").T_DEV);
+// valores globais ({nsess}, {horizon}…) que a página preenche com setGlobals a partir dos JSON
+const GLOBALS = ["nsess", "block", "stable", "tmax", "m", "horizon", "nrec"];
+const appSrc = app;
+check("todo valor global usado nos textos é definido no app.js", GLOBALS.every((g) => new RegExp("\\b" + g + ": \\(\\)").test(appSrc)));
+
 const ALLOW = ["Denicolò", "Português"];   // nomes próprios e o botão que leva ao português
 const ptChars = /[ãõçáéíóúâêôà]/i;
 const leftovers = ke.filter((k) => {

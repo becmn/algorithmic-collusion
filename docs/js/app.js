@@ -13,13 +13,14 @@
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const BLOCKS_PER_SECOND = 40;   // ritmo da animação (exibição; não muda o cálculo)
   const TAU_MS = 380;             // ritmo da animação do desvio
+  const NT = D.T_DEV + 1;         // pontos do gráfico do desvio: τ = 0 a T_DEV (deviation.js)
 
   const S = {
     params: null, ref: null, sessions: null, mk: null,
     mode: "recorded",   // "recorded" | "live"
     seed: null, blocks: [], shown: 0, final: null,
     running: false, paused: false, worker: null, runId: 0,
-    dev: null, devShown: 16, devTimer: null, statusKey: null, statusVars: null,
+    dev: null, devShown: NT, devTimer: null, statusKey: null, statusVars: null,
   };
 
   // ------------------------------------------------------------------ dados
@@ -111,22 +112,22 @@
     el.innerHTML = s + "</svg>";
   }
 
-  // Gráfico do desvio: degraus de τ = 0 a 15, ramo com corte × ramo sem corte.
+  // Gráfico do desvio: degraus de τ = 0 a T_DEV, ramo com corte × ramo sem corte.
   function drawDeviation() {
     const el = $("dev-chart");
     const f = frame(el, 0.5, 240, 340);
     const m = { l: 44, r: 12, t: 3 * f.fs + 20, b: 40 };
     const [y0, y1] = yDomain();
-    const x = scale(0, 16, m.l, f.w - m.r), y = scale(y0, y1, f.h - m.b, m.t);
+    const x = scale(0, NT, m.l, f.w - m.r), y = scale(y0, y1, f.h - m.b, m.t);
     let s = svgOpen(f.w, f.h) + priceAxis(null, y, m.l, f.w - m.r, f.fs);
-    for (let k = 0; k <= 15; k += (f.w < 420 ? 3 : 1)) {
+    for (let k = 0; k < NT; k += (f.w < 420 ? 3 : 1)) {
       s += `<text x="${x(k + 0.5)}" y="${f.h - m.b + 16}" text-anchor="middle" font-size="${f.fs}" fill="#4a4f58">${k}</text>`;
     }
     s += `<text x="${(m.l + f.w - m.r) / 2}" y="${f.h - 4}" text-anchor="middle" font-size="${f.fs}" fill="#4a4f58">${esc(t("axis_tau"))}</text>`;
     s += refLines(y, m.l, f.w - m.r, f.fs);
     const d = S.dev;
     if (d) {
-      const n = Math.min(16, S.devShown);
+      const n = Math.min(NT, S.devShown);
       const step = (prices, i, upto) => {
         let p = "";
         for (let k = 0; k < upto; k++) {
@@ -135,8 +136,8 @@
         }
         return p;
       };
-      s += `<path d="${step(d.control.price, 0, 16)}" fill="none" stroke="#7a7e86" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>`;
-      s += `<path d="${step(d.control.price, 1, 16)}" fill="none" stroke="#7a7e86" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>`;
+      s += `<path d="${step(d.control.price, 0, NT)}" fill="none" stroke="#7a7e86" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>`;
+      s += `<path d="${step(d.control.price, 1, NT)}" fill="none" stroke="#7a7e86" stroke-width="2" stroke-dasharray="1.5 3.5" stroke-linecap="round"/>`;
       s += `<path d="${step(d.deviation.price, 1, n)}" fill="none" stroke="#c2410c" stroke-width="2.5" stroke-dasharray="6 4"/>`;
       s += `<path d="${step(d.deviation.price, 0, n)}" fill="none" stroke="#1d4e89" stroke-width="2.5"/>`;
       // anotações em sequência
@@ -146,7 +147,7 @@
           `<text x="${xx}" y="${yy}" font-size="${f.fs + 1}" font-family="Newsreader, Georgia, serif" font-style="italic" fill="#17202a" text-anchor="${k > 11 ? "end" : "start"}" dx="${k > 11 ? -3 : 3}">${esc(t(key))}</text>`;
       };
       if (n > 1 && d.did_deviate) s += ann(1, 2, "ann_cut");
-      if (n > 2 && d.did_deviate) s += ann(2, 1, d.R <= -0.02 ? "ann_react" : "ann_noreact");
+      if (n > 2 && d.did_deviate) s += ann(2, 1, d.R <= -S.ref.deviation.protocol.thetas[0] ? "ann_react" : "ann_noreact");
       if (d.V !== null && n > d.V && d.did_deviate) s += ann(d.V, 0, "ann_back");
     }
     s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
@@ -162,9 +163,12 @@
     const rowH = fs * 2 + 26, top = 6, bottom = 38;
     const w = Math.max(260, Math.round(el.clientWidth || 600)), h = top + rows.length * rowH + bottom;
     const m = { l: 10, r: 14 };
-    const x = scale(0.5, 1.0, m.l + 8, w - m.r);
+    // eixo de 0,1 em 0,1 cobrindo todos os intervalos de confiança (lido dos dados)
+    const lo = Math.max(0, Math.floor(10 * Math.min(...rows.map((r) => Math.min(r.delta_k1_lo, r.delta_k0_lo)))) / 10);
+    const hi = Math.ceil(10 * Math.max(...rows.map((r) => Math.max(r.delta_k1_hi, r.delta_k0_hi)))) / 10;
+    const x = scale(lo, hi, m.l + 8, w - m.r);
     let s = svgOpen(w, h);
-    for (let v = 0.5; v <= 1.0001; v += 0.1) {
+    for (let v = lo; v <= hi + 1e-9; v += 0.1) {
       const xx = x(v).toFixed(1);
       s += `<line x1="${xx}" x2="${xx}" y1="${top}" y2="${h - bottom}" stroke="#e9e7e1"/>`;
       s += `<text x="${xx}" y="${h - bottom + 16}" text-anchor="middle" font-size="${fs}" fill="#4a4f58">${esc(num(v, 1))}</text>`;
@@ -198,6 +202,15 @@
     $("learn-table").innerHTML = table([t("th_periods"), t("th_price_a"), t("th_price_b"), t("th_delta_block")], rows, 1);
   }
 
+  // Alternativa em texto da Figura 2 (WCAG 1.1.1): preços dos dois ramos, τ = 0 a T_DEV.
+  function renderDevTable() {
+    const d = S.dev;
+    if (!d) { $("dev-table").innerHTML = ""; return; }
+    const rows = d.tau.map((k) => [String(k), num(d.deviation.price[k][0], 3), num(d.deviation.price[k][1], 3),
+      num(d.control.price[k][0], 3), num(d.control.price[k][1], 3)]);
+    $("dev-table").innerHTML = table([t("th_tau"), t("th_a_cut"), t("th_b_cut"), t("th_a_nocut"), t("th_b_nocut")], rows, 1);
+  }
+
   function renderSide() {
     const shownBlocks = Math.floor(S.shown);
     const done = S.final && shownBlocks >= S.blocks.length;
@@ -215,8 +228,7 @@
       if (S.mode === "live" && S.final.ms !== undefined) outcome += " " + t("compute_time", { s: num(S.final.ms / 1000, 2) });
     } else if (!done && shownBlocks > 0) {
       const b = S.blocks[shownBlocks - 1];
-      outcome = t(S.paused ? "status_paused" : "status_learning",
-                  { t: num((b.t_start + b.n_periods) / 1e3, 0), eps: num(b.epsilon_start * 100, 1) });
+      outcome = t("status_learning", { t: num(b.t_start + b.n_periods, 0), eps: num(b.epsilon_start * 100, 1) });
     }
     $("outcome").textContent = outcome;
   }
@@ -228,14 +240,16 @@
   }
   function convergedStatus() {
     const f = S.final;
-    const vars = { periods: num(f.periods / 1e6, 2), delta: num(f.delta, 2) };
+    const mi = f.periods / 1e6;
+    // funções: o texto é formatado de novo no idioma ativo quando a língua muda
+    const vars = { periods: () => num(mi, 2), delta: () => num(f.delta, 2), mi: () => t(mi < 2 ? "million_one" : "million_many") };
     if (!f.converged) return ["status_not_converged", vars];
     return [f.delta >= 0.9 ? "status_converged_high" : f.delta <= 0.1 ? "status_converged_low" : "status_converged_mid", vars];
   }
 
   function renderButtons() {
     const run = $("btn-run");
-    const learning = S.mode === "live" && !(S.final && S.shown >= S.blocks.length);
+    const learning = !(S.final && S.shown >= S.blocks.length);
     run.textContent = t(learning ? (S.paused ? "btn_resume" : "btn_pause") : "btn_run");
     const canDeviate = !!(S.final && S.final.converged && S.shown >= S.blocks.length);
     $("btn-deviate").disabled = !canDeviate;
@@ -247,7 +261,7 @@
   function renderScore() {
     const d = S.dev;
     if (!d) { ["score-react", "score-back", "score-profit"].forEach((id) => { $(id).textContent = "–"; }); $("verdict").textContent = ""; return; }
-    const finished = S.devShown >= 16;
+    const finished = S.devShown >= NT;
     $("score-react").textContent = S.devShown > 2 ? t("score_react_value", { x: num(d.R * 100, 1) }) : "–";
     $("score-back").textContent = finished ? (d.V === null ? t("score_back_none") : String(d.V)) : "–";
     $("score-profit").textContent = finished ? t("score_profit_value", {
@@ -265,7 +279,7 @@
     const R = S.ref, P = S.params, base = R.base;
     const bt = R.mandatory_tests.find((x) => x.condition === "beta_4e-06");
     $("aggregate").textContent = t("aggregate", { n: num(base.n_sessions, 0), mean: num(base.delta_mean, 2),
-      lo: num(bt.delta_ci_lo, 2), hi: num(bt.delta_ci_hi, 2), share: num(base.share_delta_above_0_5 * 100, 1) });
+      lo: num(bt.delta_ci_lo, 2), hi: num(bt.delta_ci_hi, 2) });
     const cls = R.deviation.classes["theta_0.02"];
     $("dev-aggregate").textContent = t("dev_aggregate", { n: num(base.n_sessions, 0),
       a: num(cls.A / base.n_sessions * 100, 0), u: num(R.deviation.share_unprofitable * 100, 0) });
@@ -308,6 +322,7 @@
     const rowsT = [
       ["row_delta", num(base.delta_mean, 3), num(T.delta_mean.value, 3)],
       ["row_nash", num(R.best_response.nash_share, 3), num(T.nash_share.value, 3)],
+      ["row_nash_any", num(bt.nash_any_dev_share, 3), t("not_reported"), true],
       ["row_react", num(R.deviation.R_mean, 3), num(T.rival_reaction_tau2.value, 3)],
       ["row_unprof", num(R.deviation.share_unprofitable, 3), num(T.unprofitable_deviation_share.value, 3)],
       ["row_punish", num(R.deviation.V_mean_uncensored, 1), num(T.punishment_periods.value, 1)],
@@ -318,14 +333,15 @@
       rowsT.map((r) => `<tr><th scope="row">${esc(t(r[0]))}</th><td class="num${r[3] ? " em" : ""}">${esc(r[1])}</td><td class="num">${esc(r[2])}</td></tr>`).join("") +
       "</tbody>";
     $("tab1-note").textContent = t("tab1_note", {
-      proj: num(R.deviation.share_unprofitable, 3), paper: num(T.unprofitable_deviation_share.value, 3) });
+      proj: num(R.deviation.share_unprofitable, 3), paper: num(T.unprofitable_deviation_share.value, 3),
+      anyn: num(Math.round(bt.nash_any_dev_share * bt.n), 0), n: num(bt.n, 0) });
   }
 
   function renderAll() {
     I.apply();
     const other = I.getLang() === "pt" ? "en" : "pt";
     $("lang-btn-text").setAttribute("lang", other === "en" ? "en" : "pt-BR");
-    renderStatic(); renderSide(); renderButtons(); renderScore(); renderLearnTable();
+    renderStatic(); renderSide(); renderButtons(); renderScore(); renderLearnTable(); renderDevTable();
     if (S.statusKey) $("status").textContent = t(S.statusKey, S.statusVars);
     $("dev-cycle-note").hidden = !(S.final && S.final.cycle_len > 1);
     drawLearning(); drawDeviation(); drawSeparation();
@@ -361,6 +377,7 @@
     if (S.worker) return S.worker;
     const w = new Worker("js/qlearning.worker.js");
     w.onmessage = (ev) => {
+      if (S.worker !== w) return;   // mensagem atrasada de um worker já descartado
       const msg = ev.data;
       if (msg.type === "blocks" && msg.runId === S.runId) {
         Array.prototype.push.apply(S.blocks, msg.blocks);
@@ -371,22 +388,26 @@
                     greedy: Int32Array.from(r.greedy),
                     cycle: r.cycle_idx ? r.cycle_idx.map((p) => p[0] * m + p[1]) : [] };
         startAnim();
-      } else if (msg.type === "error") {
+      } else if (msg.type === "error" && (msg.runId === undefined || msg.runId === S.runId)) {
         workerFailed(msg.message);
       }
     };
-    w.onerror = (e) => { e.preventDefault(); workerFailed(e.message || "Worker"); };
+    w.onerror = (e) => { e.preventDefault(); if (S.worker !== w) return; workerFailed(e.message || "Worker"); };
     w.postMessage({ type: "init", params: S.params });
     S.worker = w;
+    workerRun = 0;   // o worker novo conta as sessões a partir de 1; a página acompanha
     return w;
   }
   // Worker conta as sessões por runId próprio; a página manda start/stop e acompanha a última.
   let workerRun = 0;
 
   function workerFailed(message) {
+    // descarta o worker quebrado: a próxima "Nova sessão ao vivo" cria outro
+    if (S.worker) { try { S.worker.terminate(); } catch (e) { /* já encerrado */ } S.worker = null; }
+    if (typeof console !== "undefined") console.error("Worker:", message);
     S.running = false;
     showRecorded();
-    setStatus("status_worker_error", { msg: message });
+    setStatus("status_worker_error");
   }
 
   function startLive(seed) {
@@ -395,8 +416,8 @@
     S.mode = "live"; S.seed = seed; S.blocks = []; S.shown = 0; S.final = null;
     S.paused = false; S.running = true;
     workerRun += 1; S.runId = workerRun;
-    w.postMessage({ type: "start", seed: seed });
-    S.dev = null; S.devShown = 16; clearTimeout(S.devTimer);
+    w.postMessage({ type: "start", seed: seed, blockSize: S.blockSize });
+    S.dev = null; S.devShown = NT; clearTimeout(S.devTimer); renderDevTable();
     setStatus("status_computing");
     renderSide(); renderButtons(); renderScore(); drawLearning(); drawDeviation();
     $("dev-cycle-note").hidden = true;
@@ -417,10 +438,11 @@
     const f = S.final;
     S.dev = D.run(S.mk, f.greedy, f.cycle, 0, S.params.learning.delta.value);
     clearTimeout(S.devTimer);
-    S.devShown = animate && !reduceMotion ? 1 : 16;
+    S.devShown = animate && !reduceMotion ? 1 : NT;
+    renderDevTable();
     const stepAnim = () => {
       drawDeviation(); renderScore();
-      if (S.devShown < 16) { S.devShown += 1; S.devTimer = setTimeout(stepAnim, TAU_MS); }
+      if (S.devShown < NT) { S.devShown += 1; S.devTimer = setTimeout(stepAnim, TAU_MS); }
     };
     stepAnim();
   }
@@ -432,15 +454,23 @@
     return 1 + (a[0] % 999999);
   }
 
+  // Botão principal: reproduz o aprendizado da sessão mostrada (gravada ou ao vivo), sem
+  // recalcular; durante a animação vira Pausar/Continuar. Sessão nova ao vivo: botão "Nova sessão".
   function onRun() {
-    const learning = S.mode === "live" && !(S.final && S.shown >= S.blocks.length);
-    if (!learning) { startLive(S.seed); return; }
+    const learning = !(S.final && S.shown >= S.blocks.length);
+    if (!learning) {
+      S.shown = 0; S.paused = false;
+      setStatus(null); renderButtons(); renderSide(); startAnim();
+      return;
+    }
     S.paused = !S.paused;
     if (S.paused) {
       const b = S.blocks[Math.max(0, Math.floor(S.shown) - 1)];
-      setStatus("status_paused", { t: num(b ? (b.t_start + b.n_periods) / 1e3 : 0, 0) });
+      const per = b ? b.t_start + b.n_periods : 0;
+      setStatus("status_paused", { t: () => num(per, 0) });
     } else {
-      setStatus("status_computing"); startAnim();
+      // replay de sessão já calculada: nada a calcular; sessão ao vivo em cálculo: "Calculando…"
+      setStatus(S.final ? null : "status_computing"); startAnim();
     }
     renderSide(); renderButtons();
   }
@@ -472,6 +502,20 @@
     Promise.all([loadJSON("qlearning_params.json"), loadJSON("qlearning_reference.json"), loadJSON("qlearning_sessions.json")])
       .then(([p, r, s]) => {
         S.params = p; S.ref = r; S.sessions = s; S.mk = E.setupMarket(p);
+        // tamanho do bloco das sessões gravadas; o worker usa o mesmo nas sessões ao vivo
+        S.blockSize = (s.sessions.find((x) => x.opens_page) || s.sessions[0]).learning_blocks_linear.block_size;
+        const sup = (e) => String(e).replace(/\d/g, (c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]);
+        // números que aparecem nos textos, lidos dos JSON (função: formata no idioma atual)
+        I.setGlobals({
+          nsess: () => num(r.base.n_sessions, 0),
+          block: () => num(S.blockSize, 0),
+          stable: () => num(p.learning.convergence.t_stable, 0),
+          tmax: () => "10" + sup(Math.round(Math.log10(p.learning.convergence.t_max))),
+          m: () => num(p.learning.m.value, 0),
+          horizon: () => num(r.deviation.protocol.horizon, 0),
+          nrec: () => num(s.sessions.length, 0),
+        });
+        if (r.deviation.protocol.horizon !== D.T_DEV) console.error("horizonte do desvio: JSON ≠ deviation.js");
         $("btn-run").addEventListener("click", onRun);
         $("btn-deviate").addEventListener("click", onDeviate);
         $("btn-new").addEventListener("click", () => startLive(randomSeed()));
