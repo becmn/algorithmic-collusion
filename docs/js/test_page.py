@@ -185,8 +185,8 @@ with sync_playwright() as p:
           and "β = 4 × 10⁻⁶" in pg.inner_text("#sep-table"))
     pg.click("#mem-without")
     src = pg.inner_text("#source-line")
-    check("sem memória: sessão gravada sem memória, aviso e botão ao vivo desligado",
-          "sem memória" in src and pg.is_visible("#mem-note") and pg.is_disabled("#btn-new")
+    check("sem memória: sessão gravada sem memória, aviso e botão ao vivo ligado",
+          "sem memória" in src and pg.is_visible("#mem-note") and pg.is_enabled("#btn-new")
           and pg.get_attribute("#mem-without", "aria-pressed") == "true", src)
     check("sem memória: Δ da sessão gravada e média das 1.000 sem memória",
           re.match(r"^0,9\d$", pg.inner_text("#delta-value")) and "sem memória" in pg.inner_text("#aggregate"))
@@ -194,8 +194,15 @@ with sync_playwright() as p:
     pg.wait_for_function("document.getElementById('score-back').textContent !== '–'", timeout=20000)
     check("sem memória: no corte a rival não reage (0,0%) e a nota explica",
           pg.inner_text("#score-react").startswith("0,0") and pg.is_visible("#dev-mem-note"), pg.inner_text("#score-react"))
+    # sessão ao vivo sem memória
+    pg.click("#btn-new")
+    pg.wait_for_function("document.getElementById('btn-deviate').disabled === false && document.getElementById('source-line').textContent.includes('navegador, sem memória')", timeout=90000)
+    pg.click("#btn-deviate")
+    pg.wait_for_function("document.getElementById('score-back').textContent !== '–'", timeout=20000)
+    check("sem memória ao vivo: converge, e no corte a rival não reage",
+          pg.inner_text("#score-react").startswith("0,0") and "sem memória" in pg.inner_text("#aggregate"), pg.inner_text("#score-react"))
     pg.click("#lang-btn")
-    check("sem memória em inglês", "Memoryless" in pg.inner_text("#source-line") and "without memory" in pg.inner_text("#badge").lower())
+    check("sem memória em inglês", "without memory" in pg.inner_text("#source-line") and "without memory" in pg.inner_text("#badge").lower())
     pg.click("#lang-btn")
     pg.click("#mem-with")
     pg.click("#btn-new")
