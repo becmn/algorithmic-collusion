@@ -566,15 +566,15 @@
     const rowsT = [
       ["row_delta", num(base.delta_mean, 3), num(T.delta_mean.value, 3)],
       ["row_nash", num(R.best_response.nash_share, 3), num(T.nash_share.value, 3)],
-      ["row_nash_any", num(bt.nash_any_dev_share, 3), t("not_reported"), true],
+      ["row_nash_any", num(bt.nash_any_dev_share, 3), t("not_reported"), "strong"],
       ["row_react", num(R.deviation.R_mean, 3), num(T.rival_reaction_tau2.value, 3)],
       ["row_unprof", num(R.deviation.share_unprofitable, 3), num(T.unprofitable_deviation_share.value, 3)],
       ["row_punish", num(R.deviation.V_mean_uncensored, 1), num(T.punishment_periods.value, 1)],
-      ["row_memoryless", num(sep0.delta_k0, 3), t("not_reported"), true],
+      ["row_memoryless", num(sep0.delta_k0, 3), t("not_reported"), "em"],
     ];
     $("tab1").innerHTML = `<caption><strong>${esc(t("tab1_caption"))}</strong></caption>` +
       `<thead><tr><th scope="col">${esc(t("th_measure"))}</th><th scope="col" class="num">${esc(t("th_project"))}</th><th scope="col" class="num">${esc(t("th_paper"))}</th></tr></thead><tbody>` +
-      rowsT.map((r) => `<tr><th scope="row">${esc(t(r[0]))}</th><td class="num${r[3] ? " em" : ""}">${esc(r[1])}</td><td class="num">${esc(r[2])}</td></tr>`).join("") +
+      rowsT.map((r) => `<tr><th scope="row">${esc(t(r[0]))}</th><td class="num${r[3] ? " " + r[3] : ""}">${esc(r[1])}</td><td class="num">${esc(r[2])}</td></tr>`).join("") +
       "</tbody>";
     $("tab1-note").textContent = t("tab1_note", {
       proj: num(R.deviation.share_unprofitable, 3), paper: num(T.unprofitable_deviation_share.value, 3),

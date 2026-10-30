@@ -57,6 +57,7 @@
       nav_method: "Método",
       nav_code: "Código",
       lang_switch_text: "English",
+      lang_switch_short: "EN",
       lang_switch_aria: "Ler esta página em inglês",
 
       kicker: "Replicação · Calvano, Calzolari, Denicolò e Pastorello (2020)",
@@ -290,6 +291,7 @@
       nav_method: "Method",
       nav_code: "Code",
       lang_switch_text: "Português",
+      lang_switch_short: "PT",
       lang_switch_aria: "Read this page in Portuguese",
 
       kicker: "Replication · Calvano, Calzolari, Denicolò and Pastorello (2020)",
@@ -509,10 +511,13 @@
   }
 
   // Número no formato do idioma (vírgula decimal em português).
+  // Negativos com o sinal de menos tipográfico (−, não o hífen); "−0,0" vira "0,0".
   function num(x, digits) {
-    return new Intl.NumberFormat(LOCALE[lang], {
+    const s = new Intl.NumberFormat(LOCALE[lang], {
       minimumFractionDigits: digits, maximumFractionDigits: digits,
     }).format(x);
+    if (s.charAt(0) !== "-") return s;
+    return /[1-9]/.test(s) ? "\u2212" + s.slice(1) : s.slice(1);
   }
 
   function date(iso) {

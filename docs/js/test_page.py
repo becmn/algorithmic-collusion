@@ -127,7 +127,7 @@ with sync_playwright() as p:
         check(f"[{lang}] 320 px sem rolagem lateral", sw <= 320, sw)
         small = pg.evaluate("""[...document.querySelectorAll('button, .topnav a, summary')]
             .filter(e => e.offsetParent).map(e => [e.id || e.textContent.trim().slice(0, 20), e.getBoundingClientRect().height,
-              e.matches('.topnav a') ? e.getBoundingClientRect().width : 99])
+              e.matches('.topnav a, #lang-btn') ? e.getBoundingClientRect().width : 99])
             .filter(x => x[1] < 44 || x[2] < 44)""")
         check(f"[{lang}] alvos de toque com 44 px de altura", not small, small)
         if SHOTS: pg.screenshot(path=str(SHOTS / f"mobile_{lang}.png"), full_page=True)

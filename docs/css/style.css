@@ -72,9 +72,9 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 600; color: var(--ink); }
 .lang-btn { min-height: 44px; padding: 0 2px; border: 0; border-bottom: 2px solid var(--ink); background: none; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
 
 /* Bloco 2 */
-.hero { padding: 56px 0 28px; }
+.hero { padding: 36px 0 20px; }
 .kicker { margin: 0 0 14px; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--kicker); font-weight: 700; }
-h1 { margin: 0; font-size: clamp(2rem, 4.4vw, 3.25rem); line-height: 1.08; letter-spacing: -0.015em; }
+h1 { margin: 0; font-size: clamp(1.9rem, 3.5vw, 2.7rem); line-height: 1.1; letter-spacing: -0.015em; }
 .dek { margin: 18px 0 0; font-family: var(--serif); font-size: clamp(1.15rem, 2vw, 1.4rem); line-height: 1.45; color: #3b4049; max-width: 40em; }
 .byline { align-self: end; border-left: 1px solid var(--rule); padding-left: 18px; font-size: 0.9rem; color: var(--muted); }
 .byline p { margin: 0 0 8px; }
@@ -141,7 +141,9 @@ thead th, thead td { font-weight: 600; border-bottom: 1px solid var(--ink); }
 table.results thead th, table.results thead td { border-top: 2px solid var(--ink); }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums lining-nums; white-space: nowrap; padding-right: 0; padding-left: 14px; }
 table.results tbody tr:last-child td, table.results tbody tr:last-child th { border-bottom: 2px solid var(--ink); }
+/* laranja = "sem memória" (mesma cor dos gráficos); outros destaques em negrito preto */
 td.em { color: var(--firm-b); font-weight: 700; }
+td.strong { color: var(--ink); font-weight: 700; }
 .compare { margin: 12px 0 18px; }
 .data-table { margin-top: 6px; }
 .data-table summary, .method summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--firm-a); font-weight: 600; }
@@ -224,3 +226,12 @@ td.em { color: var(--firm-b); font-weight: 700; }
 .tip-dot { position: absolute; z-index: 5; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
            border: 2px solid var(--bg); pointer-events: none; }
 @media (prefers-reduced-motion: no-preference) { .tip { transition: left 60ms linear, top 60ms linear; } }
+
+/* botão de idioma curto ("EN"/"PT") no celular, para o menu caber numa linha */
+.lang-short { display: none; }
+@media (max-width: 480px) {
+  .lang-long { display: none; }
+  .lang-short { display: inline; }
+  .topnav { gap: 0 10px; font-size: 0.9rem; }
+}
+.lang-btn { min-width: 44px; }
