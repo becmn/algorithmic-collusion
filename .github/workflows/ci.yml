@@ -30,6 +30,11 @@ jobs:
       - name: Reprodução exata do caso base (sementes 1 a 40)
         env: {PYTHONIOENCODING: utf-8}
         run: python qlearning/check_reproduction.py 40
+      - name: Sessão sem memória do simulador igual aos resultados (4 conferências)
+        env: {PYTHONIOENCODING: utf-8}
+        run: |
+          python qlearning/export_memoryless.py | tee k0.txt
+          grep -q "4 de 4 conferências True" k0.txt
       - name: Agentes de LLM sem API (cliente falso e SDK sem rede)
         env: {PYTHONIOENCODING: utf-8}
         run: |

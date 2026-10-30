@@ -123,6 +123,47 @@ with sync_playwright() as p:
         if SHOTS: pg.screenshot(path=str(SHOTS / f"mobile_{lang}.png"), full_page=True)
         ctx.close()
 
+    # seletor "Com memória | Sem memória" e Figura 3 (revisão de 30/10/2026)
+    ctx = b.new_context(viewport={"width": 1200, "height": 900}); pg = ctx.new_page()
+    errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(URL + "?lang=pt"); pg.wait_for_selector("body[data-ready='1']")
+    check("Figura 3: barras desenhadas e resultado escrito com números",
+          pg.evaluate("document.querySelectorAll('#sep-main svg rect').length") >= 4
+          and re.search(r"Δ 0,9\d contra 0,8\d", pg.inner_text("#sep-result")), pg.inner_text("#sep-result"))
+    pg.click("#sep-more summary")
+    check("Figura 3: as 7 condições aparecem ao abrir, com tabela e parâmetro técnico",
+          pg.evaluate("document.querySelectorAll('#sep-chart svg circle').length") == 7
+          and pg.evaluate("document.querySelectorAll('#sep-table tbody tr').length") == 7
+          and "β = 4 × 10⁻⁶" in pg.inner_text("#sep-table"))
+    pg.click("#mem-without")
+    src = pg.inner_text("#source-line")
+    check("sem memória: sessão gravada sem memória, aviso e botão ao vivo desligado",
+          "sem memória" in src and pg.is_visible("#mem-note") and pg.is_disabled("#btn-new")
+          and pg.get_attribute("#mem-without", "aria-pressed") == "true", src)
+    check("sem memória: Δ da sessão gravada e média das 1.000 sem memória",
+          re.match(r"^0,9\d$", pg.inner_text("#delta-value")) and "sem memória" in pg.inner_text("#aggregate"))
+    pg.click("#btn-deviate")
+    pg.wait_for_function("document.getElementById('score-back').textContent !== '–'", timeout=20000)
+    check("sem memória: no corte a rival não reage (0,0%) e a nota explica",
+          pg.inner_text("#score-react").startswith("0,0") and pg.is_visible("#dev-mem-note"), pg.inner_text("#score-react"))
+    pg.click("#lang-btn")
+    check("sem memória em inglês", "Memoryless" in pg.inner_text("#source-line") and "without memory" in pg.inner_text("#badge").lower())
+    pg.click("#lang-btn")
+    pg.click("#mem-with")
+    pg.click("#btn-new")
+    pg.wait_for_timeout(300)
+    pg.click("#mem-without")             # troca no meio de uma sessão ao vivo
+    pg.click("#mem-with")
+    pg.click("#btn-new")
+    try:
+        pg.wait_for_function("document.getElementById('btn-deviate').disabled === false && document.getElementById('source-line').textContent.includes('navegador')", timeout=90000)
+        ok_live = True
+    except Exception:
+        ok_live = False
+    check("trocar de modo no meio de uma sessão ao vivo não trava a próxima", ok_live and not errs, errs)
+    ctx.close()
+
     # falha do worker: volta à sessão gravada com aviso, e um 2º clique não trava em "Calculando"
     ctx = b.new_context(viewport={"width": 1000, "height": 800}); pg = ctx.new_page()
     pg.route("**/qlearning.worker.js", lambda route: route.fulfill(status=404, body=""))

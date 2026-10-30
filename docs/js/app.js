@@ -19,6 +19,8 @@
     params: null, ref: null, sessions: null, mk: null,
     mode: "recorded",   // "recorded" | "live"
     seed: null, blocks: [], shown: 0, final: null,
+    memory: "with",     // "with" (memória de 1 período) | "without" (sessão gravada sem memória)
+    k0: null,           // qlearning_memoryless.json
     running: false, paused: false, worker: null, runId: 0,
     dev: null, devShown: NT, devTimer: null, statusKey: null, statusVars: null,
   };
@@ -31,8 +33,10 @@
     });
   }
 
+  // Sessão gravada mostrada: com memória (abre a página) ou sem memória (seletor).
   function recordedSession() {
-    const s = S.sessions.sessions.find((x) => x.opens_page) || S.sessions.sessions[0];
+    const s = S.memory === "without" ? S.k0.session
+      : (S.sessions.sessions.find((x) => x.opens_page) || S.sessions.sessions[0]);
     const L = s.learning_blocks_linear, m = S.mk.m, Ssz = m * m;
     const blocks = L.t_start.map((t0, k) => ({
       t_start: t0, n_periods: L.n_periods[k], price_firm1: L.price_firm1[k],
@@ -186,6 +190,52 @@
     el.innerHTML = s + "</svg>";
   }
   const condKey = (level) => "cond_" + level.replace(/[-.]/g, "_");
+  // Parâmetro técnico de cada condição, montado do nível gravado no JSON (ex.: "beta4e-06").
+  function techLabel(level) {
+    const sup = (e) => String(e).replace(/-/g, "⁻").replace(/\d/g, (c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]);
+    let m = /^beta([\d.]+)e(-?\d+)$/.exec(level);
+    if (m) {
+      const c = Number(m[1]), e = Number(m[2]);
+      return `β = ${c === 1 ? "" : num(c, 0) + " × "}10${sup(e)}`;
+    }
+    m = /^epsmin([\d.]+)$/.exec(level);
+    if (m) return `β = 4 × 10${sup(-6)}, ε ≥ ${num(Number(m[1]) * 100, Number(m[1]) < 0.01 ? 1 : 0)}%`;
+    return level;
+  }
+
+  // Figura 3 em destaque: duas barras (com e sem memória) na escala de Δ, de 0 (concorrência)
+  // a 1 (monopólio), com o valor escrito na ponta (o IC 95%, de ±0,01, fica no texto alternativo e
+  // na tabela das 7 condições: no tamanho da barra ele não se vê).
+  function drawSepMain() {
+    const el = $("sep-main");
+    const row = S.ref.separation_test.rows.find((x) => x.level === "beta4e-06");
+    const w = Math.max(260, Math.round(el.clientWidth || 600)), fs = w < 420 ? 12 : 14;
+    const m = { l: 10, r: 18 }, barH = fs * 2.2, top = 4;
+    const bars = [["sep_with", row.delta_k1, row.delta_k1_lo, row.delta_k1_hi, "#1d4e89"],
+                  ["sep_without", row.delta_k0, row.delta_k0_lo, row.delta_k0_hi, "#c2410c"]];
+    const rowH = fs * 1.6 + barH + 14, h = top + bars.length * rowH + fs * 2.6;
+    const x = scale(0, 1, m.l, w - m.r);
+    let s = svgOpen(w, h);
+    bars.forEach(([key, v, lo, hi, col], i) => {
+      const y0 = top + i * rowH;
+      s += `<text x="${m.l}" y="${y0 + fs}" font-size="${fs}" fill="#17202a" font-weight="600">${esc(t(key))}</text>`;
+      const yb = y0 + fs * 1.6;
+      s += `<rect x="${x(0)}" y="${yb}" width="${(x(1) - x(0)).toFixed(1)}" height="${barH}" fill="#efeee9"/>`;
+      s += `<rect x="${x(0)}" y="${yb}" width="${(x(v) - x(0)).toFixed(1)}" height="${barH}" fill="${col}"/>`;
+      const lab = num(v, 2), inside = x(v) - x(0) > fs * 4;
+      s += `<text x="${(inside ? x(v) - 8 : x(v) + 6).toFixed(1)}" y="${yb + barH / 2 + fs * 0.35}" font-size="${fs * 1.15}" font-weight="700"`
+        + ` text-anchor="${inside ? "end" : "start"}" fill="${inside ? "#fbfbf8" : "#17202a"}">Δ ${esc(lab)}</text>`;
+    });
+    const ya = top + bars.length * rowH + 2;
+    s += `<line x1="${x(0)}" x2="${x(1)}" y1="${ya}" y2="${ya}" stroke="#4a4f58"/>`;
+    for (const v of [0, 0.5, 1]) {
+      s += `<line x1="${x(v)}" x2="${x(v)}" y1="${ya}" y2="${ya + 5}" stroke="#4a4f58"/>`;
+      s += `<text x="${x(v)}" y="${ya + fs + 4}" font-size="${fs * 0.85}" fill="#4a4f58" text-anchor="${v === 0 ? "start" : v === 1 ? "end" : "middle"}">${esc(num(v, v === 0.5 ? 1 : 0))}</text>`;
+    }
+    s += `<text x="${x(0)}" y="${ya + fs * 2.3}" font-size="${fs * 0.85}" fill="#4a4f58" font-style="italic">${esc(t("axis_competition"))}</text>`;
+    s += `<text x="${x(1)}" y="${ya + fs * 2.3}" font-size="${fs * 0.85}" fill="#4a4f58" font-style="italic" text-anchor="end">${esc(t("axis_monopoly"))}</text>`;
+    el.innerHTML = s + "</svg>";
+  }
 
   // ------------------------------------------------------------------ textos e tabelas
   function table(head, rows, numericFrom) {
@@ -220,7 +270,14 @@
     $("delta-value").textContent = delta === null ? "–" : num(delta, 2);
     $("delta-when").textContent = delta === null ? "" : t(done ? "delta_final" : "delta_during");
     $("meter-fill").style.left = delta === null ? "0%" : (Math.max(0, Math.min(1, delta)) * 100).toFixed(1) + "%";
-    $("source-line").textContent = t(S.mode === "recorded" ? "source_recorded" : "source_live", { seed: S.seed });
+    $("source-line").textContent = t(S.mode === "live" ? "source_live"
+      : (S.memory === "without" ? "source_recorded_k0" : "source_recorded"), { seed: S.seed });
+    $("badge").textContent = t(S.memory === "without" ? "badge_paper_k0" : "badge_paper");
+    // referência: média das 1.000 sessões do mesmo modo (o número grande é só desta sessão)
+    const sb = S.ref.separation_test.rows.find((x) => x.level === "beta4e-06");
+    const ref = S.memory === "without" ? { n: sb.n_k0, mean: sb.delta_k0 } : { n: S.ref.base.n_sessions, mean: S.ref.base.delta_mean };
+    $("delta-mean").textContent = t("delta_mean_ref", { n: num(ref.n, 0), mean: num(ref.mean, 2) });
+    $("meter-mean").style.left = (Math.max(0, Math.min(1, ref.mean)) * 100).toFixed(1) + "%";
     let outcome = "";
     if (done && S.final.converged) {
       outcome = S.final.cycle_len > 1 ? t("outcome_cycle", { n: S.final.cycle_len }) : t("outcome_constant");
@@ -255,7 +312,13 @@
     $("btn-deviate").disabled = !canDeviate;
     $("btn-deviate").textContent = t("btn_deviate");
     $("btn-new").textContent = t("btn_new");
-    $("deviate-hint").textContent = canDeviate ? "" : t("btn_deviate_hint");
+    $("btn-new").disabled = S.memory === "without";    // o motor ao vivo só tem memória
+    $("deviate-hint").textContent = S.memory === "without" ? t("live_only_memory")
+      : (canDeviate ? "" : t("btn_deviate_hint"));
+    $("mem-with").setAttribute("aria-pressed", String(S.memory === "with"));
+    $("mem-without").setAttribute("aria-pressed", String(S.memory === "without"));
+    $("mem-note").hidden = S.memory !== "without";
+    $("dev-mem-note").hidden = S.memory !== "without";
   }
 
   function renderScore() {
@@ -278,18 +341,29 @@
   function renderStatic() {
     const R = S.ref, P = S.params, base = R.base;
     const bt = R.mandatory_tests.find((x) => x.condition === "beta_4e-06");
-    $("aggregate").textContent = t("aggregate", { n: num(base.n_sessions, 0), mean: num(base.delta_mean, 2),
-      lo: num(bt.delta_ci_lo, 2), hi: num(bt.delta_ci_hi, 2) });
+    const sepBase = R.separation_test.rows.find((x) => x.level === "beta4e-06");
+    $("aggregate").textContent = S.memory === "without"
+      ? t("aggregate_k0", { n: num(sepBase.n_k0, 0), mean: num(sepBase.delta_k0, 2),
+                            lo: num(sepBase.delta_k0_lo, 2), hi: num(sepBase.delta_k0_hi, 2) })
+      : t("aggregate", { n: num(base.n_sessions, 0), mean: num(base.delta_mean, 2),
+                         lo: num(bt.delta_ci_lo, 2), hi: num(bt.delta_ci_hi, 2) });
     const cls = R.deviation.classes["theta_0.02"];
     $("dev-aggregate").textContent = t("dev_aggregate", { n: num(base.n_sessions, 0),
       a: num(cls.A / base.n_sessions * 100, 0), u: num(R.deviation.share_unprofitable * 100, 0) });
     $("dev-caveat").innerHTML = esc(t("dev_caveat", { ref: "\u0000" })).replace("\u0000",
       `<a href="${I.LINKS.denboer}" rel="noopener" target="_blank">${esc(t("ref_denboer"))}</a>`);
-    $("sep-text").textContent = t("sep_text", { k: R.separation_test.rows.length });
-    $("sep-table").innerHTML = table([t("th_condition"), t("th_with"), t("th_without")],
-      R.separation_test.rows.map((r) => [t(condKey(r.level)),
+    // Figura 3: resultado em destaque (parâmetros do artigo) e as condições recolhidas
+    const nk = R.separation_test.rows.length;
+    const sv = { k: nk, k1: num(sepBase.delta_k1, 2), k0: num(sepBase.delta_k0, 2),
+                 k1lo: num(sepBase.delta_k1_lo, 2), k1hi: num(sepBase.delta_k1_hi, 2),
+                 k0lo: num(sepBase.delta_k0_lo, 2), k0hi: num(sepBase.delta_k0_hi, 2) };
+    $("sep-main-desc").textContent = t("sep_main_desc", sv);
+    $("sep-result").textContent = t("sep_result", sv);
+    $("sep-more-summary").textContent = t("sep_more", sv);
+    $("sep-table").innerHTML = table([t("th_condition"), t("th_param_tech"), t("th_with"), t("th_without")],
+      R.separation_test.rows.map((r) => [t(condKey(r.level)), techLabel(r.level),
         `${num(r.delta_k1, 3)} [${num(r.delta_k1_lo, 3)}; ${num(r.delta_k1_hi, 3)}]`,
-        `${num(r.delta_k0, 3)} [${num(r.delta_k0_lo, 3)}; ${num(r.delta_k0_hi, 3)}]`]), 1);
+        `${num(r.delta_k0, 3)} [${num(r.delta_k0_lo, 3)}; ${num(r.delta_k0_hi, 3)}]`]), 2);
 
     // tabela de parâmetros (valores e páginas lidos do JSON)
     const mk = P.market, L = P.learning, en = I.getLang() === "en";
@@ -344,7 +418,7 @@
     renderStatic(); renderSide(); renderButtons(); renderScore(); renderLearnTable(); renderDevTable();
     if (S.statusKey) $("status").textContent = t(S.statusKey, S.statusVars);
     $("dev-cycle-note").hidden = !(S.final && S.final.cycle_len > 1);
-    drawLearning(); drawDeviation(); drawSeparation();
+    drawLearning(); drawDeviation(); drawSeparation(); drawSepMain();
   }
 
   // ------------------------------------------------------------------ animação do aprendizado
@@ -423,6 +497,19 @@
     $("dev-cycle-note").hidden = true;
   }
 
+  // Seletor "Com memória | Sem memória": interrompe uma sessão ao vivo e mostra a gravada.
+  function setMemory(which) {
+    if (S.memory === which) return;
+    if (S.worker && S.running) {
+      S.worker.postMessage({ type: "stop" });
+      workerRun += 1;                   // o worker também conta o "stop" (qlearning.worker.js)
+    }
+    S.runId = -1;                       // ignora blocos atrasados da sessão ao vivo
+    if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+    S.memory = which;
+    showRecorded();
+  }
+
   function showRecorded() {
     const r = recordedSession();
     S.mode = "recorded"; S.seed = r.seed; S.blocks = r.blocks; S.shown = r.blocks.length; S.final = r.final;
@@ -499,9 +586,10 @@
   function init() {
     I.setLang(I.initialLang());
     I.apply();
-    Promise.all([loadJSON("qlearning_params.json"), loadJSON("qlearning_reference.json"), loadJSON("qlearning_sessions.json")])
-      .then(([p, r, s]) => {
-        S.params = p; S.ref = r; S.sessions = s; S.mk = E.setupMarket(p);
+    Promise.all([loadJSON("qlearning_params.json"), loadJSON("qlearning_reference.json"), loadJSON("qlearning_sessions.json"),
+                 loadJSON("qlearning_memoryless.json")])
+      .then(([p, r, s, k0]) => {
+        S.params = p; S.ref = r; S.sessions = s; S.mk = E.setupMarket(p); S.k0 = k0;
         // tamanho do bloco das sessões gravadas; o worker usa o mesmo nas sessões ao vivo
         S.blockSize = (s.sessions.find((x) => x.opens_page) || s.sessions[0]).learning_blocks_linear.block_size;
         const sup = (e) => String(e).replace(/\d/g, (c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]);
@@ -518,10 +606,14 @@
         if (r.deviation.protocol.horizon !== D.T_DEV) console.error("horizonte do desvio: JSON ≠ deviation.js");
         $("btn-run").addEventListener("click", onRun);
         $("btn-deviate").addEventListener("click", onDeviate);
-        $("btn-new").addEventListener("click", () => startLive(randomSeed()));
+        $("btn-new").addEventListener("click", () => { if (S.memory === "with") startLive(randomSeed()); });
+        $("mem-with").addEventListener("click", () => setMemory("with"));
+        $("mem-without").addEventListener("click", () => setMemory("without"));
+        // o gráfico das 7 condições fica recolhido: desenha com a largura certa ao abrir
+        $("sep-more").addEventListener("toggle", () => { if ($("sep-more").open) drawSeparation(); });
         $("lang-btn").addEventListener("click", onLang);
         let rs = null;
-        window.addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { drawLearning(); drawDeviation(); drawSeparation(); }, 120); });
+        window.addEventListener("resize", () => { clearTimeout(rs); rs = setTimeout(() => { drawLearning(); drawDeviation(); drawSeparation(); drawSepMain(); }, 120); });
         showRecorded();
         document.body.dataset.ready = "1";
       })

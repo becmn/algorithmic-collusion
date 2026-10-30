@@ -101,6 +101,8 @@ h1 { margin: 0; font-size: clamp(2rem, 4.4vw, 3.25rem); line-height: 1.08; lette
 .delta-value output { font: inherit; }
 .delta-when { margin: 4px 0 12px; color: var(--muted); font-size: 0.9rem; }
 .meter { position: relative; height: 6px; background: linear-gradient(90deg, #e9e7e1, #c9d6e6); border-bottom: 1px solid var(--ctrl); }
+.delta-mean { margin: 0 0 10px; font-size: 0.9rem; color: var(--ink); }
+.meter-mean { position: absolute; top: -6px; height: 18px; width: 0; border-left: 2px dotted var(--ink); margin-left: -1px; }
 .meter-fill { position: absolute; top: -6px; width: 3px; height: 18px; margin-left: -1.5px; background: var(--ink); left: 0; transition: left 0.3s ease; }
 .delta-scale { font-size: 0.82rem; color: var(--muted); margin: 8px 0 16px; }
 .source { font-size: 0.85rem; margin: 0 0 6px; color: var(--kicker); font-weight: 700; letter-spacing: 0.02em; }
@@ -185,3 +187,23 @@ td.em { color: var(--firm-b); font-weight: 700; }
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Seletor "Com memória | Sem memória" (revisão de 30/10/2026) */
+.mem-switch { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 0; margin: 0 0 14px; }
+.mem-label { font-size: 0.82rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-right: 12px; }
+.seg { min-height: 44px; padding: 0 16px; font: inherit; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+       background: var(--bg); color: var(--ink); border: 1px solid var(--ink); border-radius: 0; }
+.seg + .seg { border-left: 0; }
+.seg[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.seg:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.mem-note { margin-top: -4px; }
+
+/* Figura 3: resultado em destaque e as condições recolhidas */
+.sep-result { font-size: 1.05rem; }
+.more { border-top: 1px solid var(--rule); margin-top: 12px; }
+.more > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--firm-a); font-weight: 600; }
+@media (max-width: 760px) {
+  .mem-label { flex-basis: 100%; margin: 0 0 2px; }
+  .seg { flex: 1 1 0; }
+}
+#sep-main { min-height: 0; }

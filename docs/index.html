@@ -54,10 +54,16 @@
 
     <section class="grid rule-top hero-data" aria-labelledby="learn-title">
       <div class="col-main">
+        <div class="mem-switch" role="group" aria-labelledby="mem-label">
+          <span id="mem-label" class="mem-label" data-i18n="mem_switch_label"></span>
+          <button type="button" id="mem-with" class="seg" aria-pressed="true" data-i18n="mem_with"></button>
+          <button type="button" id="mem-without" class="seg" aria-pressed="false" data-i18n="mem_without"></button>
+        </div>
+        <p class="note mem-note" id="mem-note" hidden data-i18n="mem_note"></p>
         <figure class="figure">
           <figcaption class="figcap">
             <strong data-i18n="fig_1"></strong> <span id="learn-title" data-i18n="chart_learning_title"></span>
-            <span class="badge" data-i18n="badge_paper"></span>
+            <span class="badge" id="badge"></span>
           </figcaption>
           <div class="legend" aria-hidden="true">
             <span class="lg"><span class="key key-a"></span> <span data-i18n="firm_a"></span></span>
@@ -83,7 +89,8 @@
         <p class="delta-label" data-i18n="delta_label"></p>
         <p class="delta-value"><output id="delta-value" aria-live="off">–</output></p>
         <p class="delta-when" id="delta-when"></p>
-        <div class="meter" aria-hidden="true"><div class="meter-fill" id="meter-fill"></div></div>
+        <p class="delta-mean" id="delta-mean"></p>
+        <div class="meter" aria-hidden="true"><div class="meter-mean" id="meter-mean"></div><div class="meter-fill" id="meter-fill"></div></div>
         <p class="delta-scale" data-i18n="delta_scale"></p>
         <p class="source" id="source-line"></p>
         <p class="status" id="status" role="status" aria-live="polite"></p>
@@ -98,6 +105,7 @@
         <h2 id="dev-h2" data-i18n="dev_h2"></h2>
         <p data-i18n="dev_intro"></p>
         <p class="note" id="dev-cycle-note" hidden data-i18n="dev_cycle_note"></p>
+        <p class="note mem-note" id="dev-mem-note" hidden data-i18n="dev_mem_note"></p>
         <figure class="figure">
           <figcaption class="figcap"><strong data-i18n="fig_2"></strong> <span id="dev-title" data-i18n="chart_dev_title"></span></figcaption>
           <div class="legend" aria-hidden="true">
@@ -128,21 +136,27 @@
     <section class="grid rule-top block" aria-labelledby="sep-h2">
       <div class="col-main">
         <h2 id="sep-h2" data-i18n="sep_h3"></h2>
-        <p id="sep-text"></p>
+        <p data-i18n="sep_predict"></p>
         <figure class="figure">
-          <figcaption class="figcap"><strong data-i18n="fig_3"></strong> <span id="sep-title" data-i18n="chart_sep_title"></span></figcaption>
-          <div class="legend" aria-hidden="true">
-            <span class="lg"><span class="key key-dot-with"></span> <span data-i18n="sep_with"></span></span>
-            <span class="lg"><span class="key key-dot-without"></span> <span data-i18n="sep_without"></span></span>
-          </div>
-          <div id="sep-chart" class="chart" role="img" aria-labelledby="sep-title" aria-describedby="sep-desc"></div>
-          <p id="sep-desc" class="visually-hidden" data-i18n="chart_sep_desc"></p>
-          <details class="data-table">
-            <summary data-i18n="data_table_summary"></summary>
-            <div id="sep-table" class="table-scroll"></div>
-          </details>
+          <figcaption class="figcap"><strong data-i18n="fig_3"></strong> <span id="sep-main-title" data-i18n="sep_main_title"></span></figcaption>
+          <div id="sep-main" class="chart" role="img" aria-labelledby="sep-main-title" aria-describedby="sep-main-desc"></div>
+          <p id="sep-main-desc" class="visually-hidden"></p>
         </figure>
-        <p class="note" data-i18n="sep_note"></p>
+        <p class="sep-result" id="sep-result"></p>
+        <details class="more" id="sep-more">
+          <summary id="sep-more-summary"></summary>
+          <p class="note" data-i18n="sep_note"></p>
+          <figure class="figure">
+            <figcaption class="figcap"><span id="sep-title" data-i18n="chart_sep_title"></span></figcaption>
+            <div class="legend" aria-hidden="true">
+              <span class="lg"><span class="key key-dot-with"></span> <span data-i18n="sep_with"></span></span>
+              <span class="lg"><span class="key key-dot-without"></span> <span data-i18n="sep_without"></span></span>
+            </div>
+            <div id="sep-chart" class="chart" role="img" aria-labelledby="sep-title" aria-describedby="sep-desc"></div>
+            <p id="sep-desc" class="visually-hidden" data-i18n="chart_sep_desc"></p>
+            <div id="sep-table" class="table-scroll"></div>
+          </figure>
+        </details>
       </div>
       <aside class="col-side side">
         <p class="pullquote" data-i18n="sep_conclusion"></p>
