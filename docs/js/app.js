@@ -241,7 +241,8 @@
   function convergedStatus() {
     const f = S.final;
     const mi = f.periods / 1e6;
-    const vars = { periods: num(mi, 2), delta: num(f.delta, 2), mi: t(mi < 2 ? "million_one" : "million_many") };
+    // funções: o texto é formatado de novo no idioma ativo quando a língua muda
+    const vars = { periods: () => num(mi, 2), delta: () => num(f.delta, 2), mi: () => t(mi < 2 ? "million_one" : "million_many") };
     if (!f.converged) return ["status_not_converged", vars];
     return [f.delta >= 0.9 ? "status_converged_high" : f.delta <= 0.1 ? "status_converged_low" : "status_converged_mid", vars];
   }
@@ -332,7 +333,8 @@
       rowsT.map((r) => `<tr><th scope="row">${esc(t(r[0]))}</th><td class="num${r[3] ? " em" : ""}">${esc(r[1])}</td><td class="num">${esc(r[2])}</td></tr>`).join("") +
       "</tbody>";
     $("tab1-note").textContent = t("tab1_note", {
-      proj: num(R.deviation.share_unprofitable, 3), paper: num(T.unprofitable_deviation_share.value, 3) });
+      proj: num(R.deviation.share_unprofitable, 3), paper: num(T.unprofitable_deviation_share.value, 3),
+      anyn: num(Math.round(bt.nash_any_dev_share * bt.n), 0), n: num(bt.n, 0) });
   }
 
   function renderAll() {
@@ -392,6 +394,7 @@
     w.onerror = (e) => { e.preventDefault(); workerFailed(e.message || "Worker"); };
     w.postMessage({ type: "init", params: S.params });
     S.worker = w;
+    workerRun = 0;   // o worker novo conta as sessões a partir de 1; a página acompanha
     return w;
   }
   // Worker conta as sessões por runId próprio; a página manda start/stop e acompanha a última.
@@ -462,7 +465,8 @@
     S.paused = !S.paused;
     if (S.paused) {
       const b = S.blocks[Math.max(0, Math.floor(S.shown) - 1)];
-      setStatus("status_paused", { t: num(b ? b.t_start + b.n_periods : 0, 0) });
+      const per = b ? b.t_start + b.n_periods : 0;
+      setStatus("status_paused", { t: () => num(per, 0) });
     } else {
       // replay de sessão já calculada: nada a calcular; sessão ao vivo em cálculo: "Calculando…"
       setStatus(S.final ? null : "status_computing"); startAnim();

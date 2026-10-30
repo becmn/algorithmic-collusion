@@ -67,6 +67,9 @@ with sync_playwright() as p:
     ctx = b.new_context(viewport={"width": 1200, "height": 900}); pg = ctx.new_page()
     pg.goto(URL + "?lang=pt"); pg.wait_for_selector("body[data-ready='1']")
     pg.click("#lang-btn")
+    st = pg.inner_text("#status")
+    check("status reformatado ao trocar de idioma (inglês, ponto decimal)",
+          re.search(r"after \d+\.\d\d million periods", st) and "milh" not in st, st)
     check("botão troca para inglês", pg.evaluate("document.documentElement.lang") == "en-GB" and "lang=en" in pg.url)
     bad, left, _ = texts_ok(pg, "en")
     check("depois da troca, todo texto em inglês", not bad and not left, bad + left)
@@ -90,7 +93,7 @@ with sync_playwright() as p:
     pg.wait_for_function("document.getElementById('score-back').textContent !== '–'", timeout=20000)
     check("desvio forçado na sessão ao vivo preenche o placar", pg.inner_text("#verdict").strip() != "")
     check("tabela de dados da Figura 2 (desvio) com τ = 0 a 15",
-          pg.evaluate("document.querySelectorAll('#dev-table tbody tr').length") == 16)
+          pg.evaluate("document.querySelectorAll('#dev-table tbody tr').length") == pg.evaluate("QDeviation.T_DEV + 1"))
     pg.click("#lang-btn")
     bad, left, _ = texts_ok(pg, "en")
     check("troca de idioma depois de rodar ao vivo", not bad and not left and "browser" in pg.inner_text("#source-line"), bad + left)
@@ -133,6 +136,25 @@ with sync_playwright() as p:
             ok = False
         pg.evaluate("document.getElementById('status').textContent = ''")
     check("falha do worker: aviso nas duas tentativas, sem travar", ok and "Python" in pg.inner_text("#source-line"))
+    ctx.close()
+    # falha só na 1ª carga do worker: a 2ª tentativa cria outro worker e a sessão ao vivo termina
+    ctx = b.new_context(viewport={"width": 1000, "height": 800}); pg = ctx.new_page()
+    loads = {"n": 0}
+    def flaky(route):
+        loads["n"] += 1
+        if loads["n"] == 1: route.fulfill(status=404, body="")
+        else: route.continue_()
+    pg.route("**/qlearning.worker.js", flaky)
+    pg.goto(URL + "?lang=en"); pg.wait_for_selector("body[data-ready='1']")
+    pg.click("#btn-new")
+    pg.wait_for_function("document.getElementById('status').textContent.includes('could not run')", timeout=10000)
+    pg.click("#btn-new")
+    try:
+        pg.wait_for_function("document.getElementById('btn-deviate').disabled === false && document.getElementById('source-line').textContent.includes('browser')", timeout=90000)
+        rec = True
+    except Exception:
+        rec = False
+    check("depois de uma falha, um worker novo roda a sessão ao vivo até o fim", rec)
     ctx.close()
 
     # movimento reduzido: sem animação, resultado direto

@@ -48,7 +48,7 @@
       row_punish: "Períodos até os preços voltarem (média das sessões em que voltaram)",
       row_memoryless: "Δ médio sem memória, com a mesma exploração",
       not_reported: "não reportado",
-      tab1_note: "A diferença em cortes que não compensaram ({proj} contra {paper}) não foi explicada: o artigo não descreve a conta exata. Na linha “qualquer desvio”, a empresa pode mudar o preço por vários períodos seguidos; com essa regra mais exigente, nenhuma sessão fica em equilíbrio de Nash. Todo número da coluna “Este projeto” vem de um arquivo em results/ no repositório; a outra coluna vem do artigo.",
+      tab1_note: "A diferença em cortes que não compensaram ({proj} contra {paper}) não foi explicada: o artigo não descreve a conta exata. Na linha “qualquer desvio”, a empresa pode desviar por qualquer número de períodos (melhor resposta ótima); com essa regra mais exigente, {anyn} das {n} sessões ficam em equilíbrio de Nash no caminho. Todo número da coluna “Este projeto” vem de um arquivo em results/ no repositório; a outra coluna vem do artigo.",
       about_h2: "Sobre este projeto",
       about_p1: "Este simulador é a primeira parte de um projeto que replica o experimento de Calvano et al. (2020) e, na próxima fase, aplica as mesmas medidas, o índice Δ e o teste do desvio, a agentes de linguagem (LLMs).",
       about_p2: "As escolhas de método foram registradas antes de rodar os testes, inclusive a regra que decidiu a frase da conclusão. Código, dados e testes automáticos estão no repositório.",
@@ -240,7 +240,7 @@
       fig_1: "Figure 1.",
       fig_2: "Figure 2.",
       fig_3: "Figure 3.",
-      sep_rule_note: "The rule that decided this sentence was written before the test was run: the phrase “consistent with tacit collusion” would be used only if the algorithms with memory ended up above those without it.",
+      sep_rule_note: "The rule that set this sentence was written before the test was run: the phrase “consistent with tacit collusion” would be used only if the algorithms with memory ended up above those without it.",
       tab1_h2: "Main results and the original paper",
       tab1_caption: "Table 1. Base case, {nsess} sessions (seeds 1 to {nsess})",
       th_measure: "Measure",
@@ -254,7 +254,7 @@
       row_punish: "Periods until prices return (mean over sessions where they returned)",
       row_memoryless: "Mean Δ without memory, with the same exploration",
       not_reported: "not reported",
-      tab1_note: "The gap in cuts that did not pay off ({proj} versus {paper}) remains unexplained: the paper does not describe the exact calculation. In the “any deviation” row, a firm may change its price for several periods in a row; under this stricter rule, no session is in Nash equilibrium. Every number in the “This project” column comes from a file in results/ in the repository; the other column comes from the paper.",
+      tab1_note: "The gap in cuts that did not pay off ({proj} versus {paper}) remains unexplained: the paper does not describe the exact calculation. In the “any deviation” row, a firm may deviate for any number of periods (optimal best response); under this stricter rule, {anyn} of the {n} sessions are in Nash equilibrium on path. Every number in the “This project” column comes from a file in results/ in the repository; the other column comes from the paper.",
       about_h2: "About this project",
       about_p1: "This simulator is the first part of a project that replicates the Calvano et al. (2020) experiment and, in the next phase, applies the same measures, the Δ index and the deviation test, to language-model (LLM) agents.",
       about_p2: "Methodological choices were recorded before the tests were run, including the rule that decided the conclusion's wording. Code, data and automated tests are in the repository.",
@@ -267,7 +267,7 @@
 
       kicker: "Replication · Calvano, Calzolari, Denicolò and Pastorello (2020)",
       title: "Two pricing algorithms that never communicated learned to charge above the competitive price",
-      subtitle: "Each line is the price of a firm run by an algorithm that learns on its own, by trial and error. Near the bottom line means competition; near the top line, monopoly.",
+      subtitle: "Each line is the price of a firm run by an algorithm that learns on its own, by trial and error. Prices near the bottom line mean competition; near the top line, monopoly.",
       badge_paper: "Parameters from the paper",
 
       chart_learning_title: "Each firm's price during learning",
@@ -439,17 +439,18 @@
 
   // Valores que vêm dos JSON e aparecem em vários textos (ex.: {nsess}, {horizon}); a página os
   // define com setGlobals depois de carregar os dados, assim nenhum número fica digitado no texto.
-  let globals = {};
+  let globals = null;
   function setGlobals(g) { globals = g || {}; }
 
   function t(key, vars) {
     let s = STR[lang][key];
     if (s === undefined) { console.error("i18n: chave ausente", lang, key); s = STR.pt[key] || key; }
     const fill = (k) => {
-      const v = vars && vars[k] !== undefined ? vars[k] : globals[k];
+      const v = vars && vars[k] !== undefined ? vars[k] : (globals ? globals[k] : undefined);
       return typeof v === "function" ? v() : v;
     };
-    s = s.replace(/\{(\w+)\}/g, (m0, k) => { const v = fill(k); return v !== undefined ? v : m0; });
+    // sem dados ainda (globals null): "–" no lugar do valor; depois, chave sem valor fica visível (os testes pegam)
+    s = s.replace(/\{(\w+)\}/g, (m0, k) => { const v = fill(k); return v !== undefined ? v : (globals ? m0 : "–"); });
     return s;
   }
 
