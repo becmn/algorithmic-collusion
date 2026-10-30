@@ -46,6 +46,10 @@ class RunStopped(RuntimeError):
     """A execução parou de vez (10 novas tentativas inválidas): é reportada com o motivo."""
 
 
+class ConfigMismatch(RuntimeError):
+    """A pasta da execução já existe com outra configuração: não mistura protocolos."""
+
+
 class RunPaused(RuntimeError):
     """A execução parou mas pode ser retomada (teto de gasto, limite de uso)."""
 
@@ -121,10 +125,6 @@ def log_call(run_dir: Path, rec: dict):
         f.write(lead + json.dumps(rec, ensure_ascii=False) + "\n")
         f.flush()
 
-
-class OutputLimitHit(RuntimeError):
-    """Resposta cortada pelo limite de tokens de saída: repetir não adianta (o limite é o
-    mesmo); a execução pausa para aumentar --max-output num plano novo, com registro."""
 
 
 def read_calls(run_dir: Path, dedupe: bool = False) -> list:
@@ -266,7 +266,10 @@ def _load_or_init(ctx: Context, config: dict, agents: list):
                                         "client")}
         new = {k: config.get(k) for k in same}
         if same != new:
-            raise RuntimeError(f"{ctx.run_dir} já existe com outra configuração: {same} × {new}")
+            raise ConfigMismatch(
+                f"{ctx.run_dir.name} já existe com outra configuração (opções da chamada, prompts ou "
+                f"parâmetros). Mudar o protocolo exige plano novo, registrado em Decisões.\n"
+                f"  antes: {same}\n  agora: {new}")
         st = json.loads(st_path.read_text(encoding="utf-8"))
         if st["status"] in ("done", "stopped"):
             return st, None, None

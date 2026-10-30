@@ -67,8 +67,9 @@ class FatalAPIError(RuntimeError):
 
 # Frases de saldo/cobrança de verdade. NÃO usar "billing" sozinho: a mensagem comum de limite
 # de uso do Gemini diz "...please check your plan and billing details" e deve esperar e repetir.
-BILLING_WORDS = ("prepay", "credit balance", "insufficient balance", "billing account",
-                 "payment required", "billing is not enabled", "billing has been disabled")
+BILLING_WORDS = ("prepay", "prepayment", "credit balance", "insufficient balance", "billing account",
+                 "payment required", "billing is not enabled", "billing has been disabled",
+                 "spending cap", "spend cap", "limit: 0")
 HTTP_TIMEOUT_MS = 180_000   # 3 min por chamada; sem isso o SDK espera para sempre
 
 
@@ -133,8 +134,8 @@ class GeminiClient:
             r = self._client.models.generate_content(
                 model=self.model, contents=user, config=types.GenerateContentConfig(**cfg))
         except errors.APIError as e:
-            msg = str(e)[:300]
-            if e.code == 429 and any(w in msg.lower() for w in BILLING_WORDS):
+            full, msg = str(e), str(e)[:300]
+            if e.code == 429 and any(w in full.lower() for w in BILLING_WORDS):
                 raise FatalAPIError(f"saldo ou cobrança: {msg}") from e
             if e.code == 429:
                 raise RateLimited(msg) from e

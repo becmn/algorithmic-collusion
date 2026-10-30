@@ -14,7 +14,7 @@ desvio comum com controle e placebo. O teste de competência (monopolista, P0) v
 | `client.py` | cliente do Gemini (SDK `google-genai`), custo por chamada, teto de gasto, espera em limite de uso |
 | `experiment.py` | execuções: salva a cada período (retomada), log de cada chamada, novas tentativas, desvio |
 | `run.py` | linha de comando (abaixo) |
-| `test_llm.py` | 52 conferências sem API (roda no CI) |
+| `test_llm.py` | 55 conferências sem API (roda no CI) |
 
 ## Passo a passo (no seu computador, PowerShell, na raiz do repositório, venv ativo)
 

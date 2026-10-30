@@ -35,7 +35,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from client import Budget, FakeClient, GeminiClient  # noqa: E402
-from experiment import Context, read_calls, run_deviation, run_game  # noqa: E402
+from experiment import ConfigMismatch, Context, read_calls, run_deviation, run_game  # noqa: E402
 from market import ALPHAS, PERIODS, Market  # noqa: E402
 from prompts import PromptFilesMissing, load_prompts  # noqa: E402
 
@@ -310,7 +310,7 @@ def main(argv=None):
             stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         args.f(args)
-    except PromptFilesMissing as e:
+    except (PromptFilesMissing, ConfigMismatch) as e:
         raise SystemExit(str(e))
 
 

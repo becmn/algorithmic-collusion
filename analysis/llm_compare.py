@@ -155,7 +155,8 @@ def main():
     for h, r in out["confirmatory"].items():
         print(f"{h} {r['comparison']}: diferença {r['diff']:+.3f}, IC {100 * r['ci_family_level']:.1f}% "
               f"[{r['ci_family'][0]:+.3f}; {r['ci_family'][1]:+.3f}], p Holm {r['p_holm']:.4f} → {r['decision']}"
-              f"{' (frágil)' if r['fragile'] else ''}")
+              f"{' (frágil)' if r['fragile'] else ''}"
+              f"{' (Holm e IC ajustado discordam: citar no artigo)' if r['holm_ci_disagree'] else ''}")
 
 
 if __name__ == "__main__":

@@ -123,20 +123,21 @@ def user_prompt(ps: PromptSet, *, cost: float, ceiling: float, plans: str, insig
 # recusada pelo finish_reason (diferente de STOP).
 PRICE = re.compile(r"\s*\$?[\s*_`]*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)(?!\d|[.,]\d|[eE][-+]?\d)")
 # enfeites comuns antes do número: negrito, aspas, colchetes, barra de tabela, ~, \boxed{, USD, $
-PRICE_LEAD = re.compile(r"^[\s*_`\"'\[(|~]*(?:\\boxed\{)?[\s*_`]*(?:USD|US\$)?[\s*_`]*(?=[$\d.])")
+PRICE_LEAD = re.compile(r"^[\s*_`\"'\[|~]*(?:\$?\\boxed\{)?[\s*_`]*(?:USD|US\$)?[\s*_`]*(?=[$\d.])")
 
 
 class InvalidResponse(ValueError):
     pass
 
 
-def _label_re(label: str):
+def _label_re(label: str, exact_case: bool = False):
     """Rótulo no começo de uma linha. Aceita antes: espaços, markdown (*, #, >, _, -, |) e
     numeração ("4." ou "4)"); e, se o rótulo termina em ":", negrito antes dos dois-pontos
     ("**PRICE**:")."""
     lab = label.strip()
     core = re.escape(lab[:-1].rstrip()) + r"[ \t*_]*:" if lab.endswith(":") else re.escape(lab)
-    return re.compile(r"(?im)^[ \t>*#_|-]*(?:\d+[.)][ \t]*)?[*_]*" + core)
+    flags = "(?m)" if exact_case else "(?im)"
+    return re.compile(flags + r"^[ \t>*#_|-]*(?:\d+[.)][ \t]*)?[*_]*" + core)
 
 
 def parse_response(ps: PromptSet, text: str, finish_reason: str | None = None) -> dict:
@@ -151,7 +152,10 @@ def parse_response(ps: PromptSet, text: str, finish_reason: str | None = None) -
     labels = ps.fmt["labels"]
     pos, start = {}, 0
     for f in FIELDS:
-        found = [m for m in _label_re(labels[f]).finditer(text) if m.start() >= start]
+        # prefere o rótulo escrito exatamente como no modelo (ex.: "PLANS:"); só sem ele aceita
+        # outra caixa ("Plans:"). Assim "1. Plans: ..." dentro do raciocínio não vira o campo.
+        found = [m for m in _label_re(labels[f], True).finditer(text) if m.start() >= start] or \
+            [m for m in _label_re(labels[f]).finditer(text) if m.start() >= start]
         if not found:
             raise InvalidResponse(f"rótulo ausente ou fora de ordem: {labels[f]!r}")
         m = found[-1] if f == "price" else found[0]

@@ -117,6 +117,10 @@ try:
 except InvalidResponse:
     sci = True
 check("leitor recusa notação científica (1e2 não vira 1)", sci)
+r3 = parse_response(ps, "OBSERVATIONS: a\n1. Plans: rival undercuts\nPLANS: b\nINSIGHTS: c\nPRICE: 1.85\n- Price: 2.5 next time")
+check("rótulo em outra caixa dentro do texto não engana (notas e preço certos)",
+      r3["plans"] == "b" and r3["price_value"] == 1.85 and "rival undercuts" in r3["observations"], r3)
+check("leitor aceita $\\boxed{1.85}$", parse_response(ps, "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: $\\boxed{1.85}$")["price_value"] == 1.85)
 tricky = ("OBSERVATIONS: my plans: hold\nPLANS: b\nINSIGHTS: competitor price: 1.7 seems low\n"
           "**PRICE:** 1.9")
 r2 = parse_response(ps, tricky)
@@ -213,7 +217,7 @@ check("retomada: interrompida no meio, continua do período salvo e chega ao mes
 try:
     run_game(ctx_for("resume", FakeClient(follower), alpha=3.2), "duopoly", ["P1", "P1"], 40)
     diff_cfg = False
-except RuntimeError:
+except RuntimeError:  # ConfigMismatch
     diff_cfg = True
 fc_think = FakeClient(follower)
 fc_think.settings = lambda: {"model": "gemini-3.5-flash-lite", "temperature": 1.0, "thinking_level": "high",
@@ -410,6 +414,12 @@ if HAVE_SDK:
         "status": "RESOURCE_EXHAUSTED"}}))
     check("Gemini: a mensagem comum de limite de uso (cita 'billing details') espera e repete",
           k_quota == "RateLimited", k_quota)
+    k_cap = kinds(gerr.ClientError(429, {"error": {"code": 429, "message": "Your project has exceeded its monthly spending cap.",
+                                                   "status": "RESOURCE_EXHAUSTED"}}))
+    k_dep = kinds(gerr.ClientError(429, {"error": {"code": 429, "message": "Your prepayment credits are depleted.",
+                                                   "status": "RESOURCE_EXHAUSTED"}}))
+    check("Gemini: teto mensal do projeto e créditos pré-pagos esgotados pausam na hora",
+          (k_cap, k_dep) == ("FatalAPIError", "FatalAPIError"), (k_cap, k_dep))
     check("Gemini: falha de rede e tempo esgotado → temporário; saldo zerado e 400 → pausa com motivo",
           (k_net, k_to, k_bill, k_400) == ("TransientAPIError", "TransientAPIError", "FatalAPIError", "FatalAPIError"),
           (k_net, k_to, k_bill, k_400))
