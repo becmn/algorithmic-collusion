@@ -47,7 +47,7 @@ check("há texto para todas as condições do teste de separação", !condMissin
 // horizonte do teste do desvio: o do JSON (results/) tem de ser o de deviation.js
 check("horizonte do desvio igual no JSON e em deviation.js", ref.deviation.protocol.horizon === require("./deviation.js").T_DEV);
 // valores globais ({nsess}, {horizon}…) que a página preenche com setGlobals a partir dos JSON
-const GLOBALS = ["nsess", "block", "stable", "tmax", "m", "horizon", "nrec"];
+const GLOBALS = ["nsess", "block", "stable", "tmax", "m", "horizon", "nrec", "nk0"];
 const appSrc = app;
 check("todo valor global usado nos textos é definido no app.js", GLOBALS.every((g) => new RegExp("\\b" + g + ": \\(\\)").test(appSrc)));
 

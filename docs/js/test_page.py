@@ -127,7 +127,7 @@ with sync_playwright() as p:
         check(f"[{lang}] 320 px sem rolagem lateral", sw <= 320, sw)
         small = pg.evaluate("""[...document.querySelectorAll('button, .topnav a, summary')]
             .filter(e => e.offsetParent).map(e => [e.id || e.textContent.trim().slice(0, 20), e.getBoundingClientRect().height,
-              e.matches('.topnav a') ? e.getBoundingClientRect().width : 99])
+              e.matches('.topnav a, #lang-btn') ? e.getBoundingClientRect().width : 99])
             .filter(x => x[1] < 44 || x[2] < 44)""")
         check(f"[{lang}] alvos de toque com 44 px de altura", not small, small)
         if SHOTS: pg.screenshot(path=str(SHOTS / f"mobile_{lang}.png"), full_page=True)
@@ -192,6 +192,9 @@ with sync_playwright() as p:
           re.match(r"^0,9\d$", pg.inner_text("#delta-value")) and "sem memória" in pg.inner_text("#aggregate"))
     pg.click("#btn-deviate")
     pg.wait_for_function("document.getElementById('score-back').textContent !== '–'", timeout=20000)
+    check("sem memória: o resumo do corte não fala de reação (só com memória)",
+          pg.inner_text("#dev-aggregate").startswith("Sem memória, nenhuma rival") and "com memória" in pg.inner_text("#dev-aggregate")
+          and pg.inner_text("#dev-caveat").startswith("Com memória"))
     check("sem memória: no corte a rival não reage (0,0%) e a nota explica",
           pg.inner_text("#score-react").startswith("0,0") and pg.is_visible("#dev-mem-note"), pg.inner_text("#score-react"))
     # sessão ao vivo sem memória

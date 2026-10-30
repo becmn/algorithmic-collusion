@@ -57,7 +57,7 @@ jobs:
         run: node docs/js/test_engine.js
       - name: Motor × reimplementação independente (17 conferências)
         run: node docs/js/test_engine_independent.js
-      - name: Motor sem memória × Python (6 conferências)
+      - name: Motor sem memória × Python (7 conferências)
         run: node docs/js/test_engine_k0.js
       - name: Teste do desvio em JS × Python (12 conferências)
         run: node docs/js/test_deviation.js
