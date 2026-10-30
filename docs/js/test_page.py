@@ -123,6 +123,43 @@ with sync_playwright() as p:
         if SHOTS: pg.screenshot(path=str(SHOTS / f"mobile_{lang}.png"), full_page=True)
         ctx.close()
 
+    # valores ao passar o mouse, tocar ou usar o teclado (revisão de 30/10/2026)
+    ctx = b.new_context(viewport={"width": 1200, "height": 900}); pg = ctx.new_page()
+    errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(URL + "?lang=pt"); pg.wait_for_selector("body[data-ready='1']")
+    box = pg.locator("#learn-chart").bounding_box()
+    pg.mouse.move(box["x"] + box["width"] * 0.5, box["y"] + box["height"] * 0.5)
+    tip = pg.locator("#learn-chart + .tip, #learn-chart ~ .tip").first
+    txt = tip.inner_text() if tip.is_visible() else ""
+    check("Figura 1: passar o mouse mostra período, preços de A e B e Δ do bloco",
+          "Períodos" in txt and "Empresa A" in txt and "Empresa B" in txt and re.search(r"\d,\d{3}", txt), txt)
+    pg.mouse.move(5, 5)
+    check("Figura 1: a caixinha some quando o mouse sai", not tip.is_visible())
+    pg.focus("#dev-chart"); pg.keyboard.press("Home"); pg.keyboard.press("ArrowRight")
+    dtip = pg.locator("#dev-chart ~ .tip").first
+    check("Figura 2: teclado (Home, seta) mostra o período 1 depois do corte",
+          dtip.is_visible() and "Período 1 depois do corte" in dtip.inner_text(), dtip.inner_text() if dtip.is_visible() else "")
+    pg.keyboard.press("Escape")
+    check("Esc fecha a caixinha", not dtip.is_visible())
+    pg.locator("#sep-main").scroll_into_view_if_needed()
+    box = pg.locator("#sep-main").bounding_box()
+    pg.mouse.move(box["x"] + box["width"] * 0.3, box["y"] + box["height"] * 0.45)
+    stip = pg.locator("#sep-main ~ .tip").first
+    check("Figura 3: barras mostram Δ médio e IC 95%", stip.is_visible() and "IC 95%" in stip.inner_text())
+    check("caixinhas sem erros no console", not errs, errs)
+    ctx.close()
+    ctx = b.new_context(viewport={"width": 320, "height": 640}, has_touch=True, is_mobile=True, device_scale_factor=2)
+    pg = ctx.new_page(); pg.goto(URL + "?lang=en"); pg.wait_for_selector("body[data-ready='1']")
+    pg.locator("#learn-chart").scroll_into_view_if_needed()
+    box = pg.locator("#learn-chart").bounding_box()
+    pg.touchscreen.tap(box["x"] + box["width"] * 0.9, box["y"] + box["height"] * 0.5)
+    tip = pg.locator("#learn-chart ~ .tip").first
+    tb = tip.bounding_box() if tip.is_visible() else None
+    check("celular: tocar mostra a caixinha, dentro da tela (320 px)",
+          tb is not None and tb["x"] >= 0 and tb["x"] + tb["width"] <= 321 and "Firm A" in tip.inner_text(), tb)
+    ctx.close()
+
     # seletor "Com memória | Sem memória" e Figura 3 (revisão de 30/10/2026)
     ctx = b.new_context(viewport={"width": 1200, "height": 900}); pg = ctx.new_page()
     errs = []
