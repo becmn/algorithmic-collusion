@@ -13,7 +13,10 @@
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const BLOCKS_PER_SECOND = 40;   // ritmo da animação (exibição; não muda o cálculo)
   const TAU_MS = 380;             // ritmo da animação do desvio
-  const NT = D.T_DEV + 1;         // pontos do gráfico do desvio: τ = 0 a T_DEV (deviation.js)
+  const NT = D.T_DEV + 1;
+  // versão dos arquivos (o ?v= do próprio app.js no index.html), repassada ao Worker e aos JSON
+  const VERSION = (/[?&]v=([\w-]+)/.exec((document.currentScript || {}).src || "") || [])[1] || "";
+  const withV = (url) => (VERSION ? url + (url.includes("?") ? "&" : "?") + "v=" + VERSION : url);         // pontos do gráfico do desvio: τ = 0 a T_DEV (deviation.js)
 
   const S = {
     params: null, ref: null, sessions: null, mk: null,
@@ -27,7 +30,7 @@
 
   // ------------------------------------------------------------------ dados
   function loadJSON(name) {
-    return fetch("data/" + name).then((r) => {
+    return fetch(withV("data/" + name)).then((r) => {
       if (!r.ok) throw new Error(name + ": " + r.status);
       return r.json();
     });
@@ -616,7 +619,7 @@
   // ------------------------------------------------------------------ Worker
   function ensureWorker() {
     if (S.worker) return S.worker;
-    const w = new Worker("js/qlearning.worker.js");
+    const w = new Worker(withV("js/qlearning.worker.js"));
     w.onmessage = (ev) => {
       if (S.worker !== w) return;   // mensagem atrasada de um worker já descartado
       const msg = ev.data;

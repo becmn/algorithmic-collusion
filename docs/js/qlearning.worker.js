@@ -14,7 +14,8 @@
  *   {type: "error", message}
  * Código próprio do projeto.
  */
-importScripts("engine.js");
+// mesma versão da página (?v= no endereço do Worker): nunca mistura motor novo com arquivo antigo
+importScripts("engine.js" + (self.location.search || ""));
 
 let market = null;
 let runId = 0;          // muda a cada "start"/"stop"; lotes de sessões antigas são descartados
