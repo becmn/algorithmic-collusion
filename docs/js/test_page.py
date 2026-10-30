@@ -133,6 +133,20 @@ with sync_playwright() as p:
         if SHOTS: pg.screenshot(path=str(SHOTS / f"mobile_{lang}.png"), full_page=True)
         ctx.close()
 
+    # versão dos arquivos: a mesma em todos os scripts, no CSS, no Worker e nos JSON
+    html = (DOCS / "index.html").read_text(encoding="utf-8")
+    vers = set(re.findall(r'(?:src|href)="(?:js|css)/[\w.]+\?v=([\w-]+)"', html))
+    check("versão dos arquivos única no index.html (scripts e CSS)", len(vers) == 1 and len(re.findall(r'\?v=', html)) == 5, vers)
+    ctx = b.new_context(); pg = ctx.new_page(); reqs = []
+    pg.on("request", lambda r: reqs.append(r.url))
+    pg.goto(URL + "?lang=pt"); pg.wait_for_selector("body[data-ready='1']")
+    pg.click("#btn-new"); pg.wait_for_timeout(1500)
+    v = next(iter(vers)) if vers else "x"
+    need = ["qlearning.worker.js?v=", "engine.js?v=", "qlearning_params.json?v=", "qlearning_memoryless.json?v="]
+    check("Worker, motor dentro do Worker e JSON pedidos com a mesma versão",
+          all(any(n + v in u for u in reqs) for n in need), [u for u in reqs if "v=" in u][:8])
+    ctx.close()
+
     # valores ao passar o mouse, tocar ou usar o teclado (revisão de 30/10/2026)
     ctx = b.new_context(viewport={"width": 1200, "height": 900}); pg = ctx.new_page()
     errs = []
@@ -223,7 +237,7 @@ with sync_playwright() as p:
 
     # falha do worker: volta à sessão gravada com aviso, e um 2º clique não trava em "Calculando"
     ctx = b.new_context(viewport={"width": 1000, "height": 800}); pg = ctx.new_page()
-    pg.route("**/qlearning.worker.js", lambda route: route.fulfill(status=404, body=""))
+    pg.route("**/qlearning.worker.js*", lambda route: route.fulfill(status=404, body=""))
     pg.goto(URL + "?lang=en"); pg.wait_for_selector("body[data-ready='1']")
     ok = True
     for _ in range(2):
@@ -242,7 +256,7 @@ with sync_playwright() as p:
         loads["n"] += 1
         if loads["n"] == 1: route.fulfill(status=404, body="")
         else: route.continue_()
-    pg.route("**/qlearning.worker.js", flaky)
+    pg.route("**/qlearning.worker.js*", flaky)
     pg.goto(URL + "?lang=en"); pg.wait_for_selector("body[data-ready='1']")
     pg.click("#btn-new")
     pg.wait_for_function("document.getElementById('status').textContent.includes('could not run')", timeout=10000)

@@ -54,6 +54,8 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 600; color: var(--ink); }
 .grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; }
 .col-main { grid-column: 1 / span 8; min-width: 0; }
 .col-main-wide { grid-column: 1 / span 9; min-width: 0; }
+/* Seções abaixo do topo: uma coluna só (sem margem lateral vazia); texto com largura de leitura, figuras e tabelas na largura toda */
+.col-full { grid-column: 1 / -1; min-width: 0; }
 .col-side { grid-column: 9 / span 4; min-width: 0; }
 .hero .col-side { grid-column: 10 / span 3; }
 .col-side-left { grid-column: 1 / span 4; }
@@ -123,8 +125,8 @@ h1 { margin: 0; font-size: clamp(1.9rem, 3.5vw, 2.7rem); line-height: 1.1; lette
 /* Blocos 3, 6, 7 */
 h2 { font-size: clamp(1.6rem, 2.6vw, 2.1rem); line-height: 1.15; margin: 0 0 12px; }
 h3 { font-size: 1.25rem; margin: 28px 0 8px; }
-.col-main > p, .col-rest p, .method li { max-width: 40em; }
-.scoreboard { margin: 0; display: grid; gap: 18px; }
+.col-main > p, .col-full > p, .col-full details > p, .col-rest p, .method li { max-width: 44em; }
+.scoreboard { margin: 22px 0 0; display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 18px 64px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 14px 0; }
 .scoreboard dt { color: var(--muted); font-size: 0.9rem; }
 .scoreboard dd { margin: 2px 0 0; font-family: var(--serif); font-weight: 600; font-size: 1.6rem; line-height: 1.2; font-variant-numeric: tabular-nums lining-nums; }
 .verdict { font-weight: 700; margin-top: 18px; }
@@ -155,6 +157,7 @@ td.strong { color: var(--ink); font-weight: 700; }
 
 /* Tablet e celular: uma coluna; botões numa barra fixa no rodapé da tela */
 @media (max-width: 860px) {
+  .scoreboard { grid-template-columns: 1fr; }
   .col-main, .col-main-wide, .col-side, .hero .col-side, .col-side-left, .col-rest { grid-column: 1 / -1; }
   .side, .byline { border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 20px; }
   .hero .byline { margin-top: 24px; }

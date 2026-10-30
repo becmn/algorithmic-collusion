@@ -73,6 +73,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Versão dos arquivos atualizada no index.html (cache do navegador)
+        run: python docs/asset_version.py --check
       - name: Instalar Playwright e Chromium
         run: |
           pip install playwright==1.56.0
