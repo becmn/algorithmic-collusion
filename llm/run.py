@@ -3,9 +3,9 @@ Fase 3 — Linha de comando dos experimentos com LLM.
 
 Na raiz do repositório, com o venv ativo (passo a passo em llm/README.md):
 
-  python llm/run.py competence --model gemini-3.5-flash-lite --budget 5
+  python llm/run.py competence --model gemini-3.5-flash-lite --budget 15
       teste de competência (monopolista, P0, 300 períodos, 1 execução por α) → results/llm_pilot/
-  python llm/run.py pilot --prompt P1 --alpha 1 --periods 30 --budget 5
+  python llm/run.py pilot --prompt P1 --alpha 1 --periods 30 --budget 15
       duopólio curto para medir limites, tokens, latência e respostas inválidas → results/llm_pilot/
   python llm/run.py plan --runs-per-prompt 21
       grava results/llm_plan.csv (P1 e P2 alternados, 7 por α); só depois do piloto
@@ -86,13 +86,20 @@ def report(name, st):
 
 def cmd_competence(args):
     base = args.out if args.fake else RES / "llm_pilot"
+    passed = 0
     for k, a in enumerate(ALPHAS, start=1):
         name = f"competence_{args.model}_{alpha_tag(a)}"
         ctx = make_context(args, base / name, a, seed=k)
         st = run_game(ctx, "competence", ["P0"], PERIODS)
         report(name, st)
         if st["status"] == "paused":
-            break
+            print("Parado (teto, limite de uso ou erro). Rode o mesmo comando para continuar.")
+            return
+        passed += bool(st["status"] == "done" and (st.get("summary") or {}).get("passed"))
+    # Regra do Protocolo: passa com 3 de 3 (saída válida e convergência ao monopólio de 1 firma);
+    # 1 ou 2 de 3 é resultado parcial, registrado e decidido com a Beatriz antes do duopólio.
+    print(f"Teste de competência de {args.model}: {passed} de {len(ALPHAS)} "
+          f"→ {'PASSOU' if passed == len(ALPHAS) else ('PARCIAL: decidir com registro' if passed else 'NÃO PASSOU')}")
 
 
 def cmd_pilot(args):
@@ -129,8 +136,10 @@ def cmd_plan(args):
         for p in ("P1", "P2"):
             k = len(rows) + 1
             a = order[p][i]
+            # as opções da chamada ficam no plano: todas as execuções usam as mesmas
             rows.append({"order": k, "run_id": f"{p}_{alpha_tag(a)}_s{k:03d}", "prompt": p,
-                         "alpha": a, "seed": k, "model": args.model})
+                         "alpha": a, "seed": k, "model": args.model, "thinking": args.thinking or "",
+                         "flex": int(bool(args.flex)), "max_output": args.max_output or ""})
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
@@ -152,7 +161,11 @@ def cmd_run(args):
     for r in read_plan(args):
         if args.only and r["run_id"] != args.only:
             continue
+        # opções da chamada vêm do plano (fixado antes), não da linha de comando
         args.model = r["model"]
+        args.thinking = r.get("thinking") or None
+        args.flex = bool(int(r.get("flex") or 0))
+        args.max_output = int(r["max_output"]) if r.get("max_output") else None
         a, run_dir = float(r["alpha"]), base / r["run_id"]
         ctx = make_context(args, run_dir, a, int(r["seed"]))
         st = run_game(ctx, "duopoly", [r["prompt"], r["prompt"]], PERIODS)
@@ -180,11 +193,11 @@ def cmd_status(args):
     base = args.out if args.fake else RES
     spend = base / "llm_spend.json"
     if spend.is_file():
-        s = json.loads(spend.read_text())
+        s = json.loads(spend.read_text(encoding="utf-8"))
         print(f"Gasto acumulado (preço pago): US$ {s['spent_usd']:.4f} de {s['ceiling_usd']:.2f}")
     for sub in (["."] if args.fake else ["llm_pilot", "llm"]):
         for d in run_dirs(base / sub):
-            st = json.loads((d / "state.json").read_text()) if (d / "state.json").is_file() else {}
+            st = json.loads((d / "state.json").read_text(encoding="utf-8")) if (d / "state.json").is_file() else {}
             print(f"{sub}/{d.name}: {st.get('status', 'sem estado')}, período {st.get('period', 0)}"
                   f"{(' — ' + st['reason']) if st.get('reason') else ''}")
 
@@ -197,15 +210,17 @@ def cmd_summarize(args):
         if cfg["kind"] != "duopoly":
             continue
         st = json.loads((d / "state.json").read_text(encoding="utf-8"))
-        calls = read_calls(d) + read_calls(d / "deviation" / "control") + read_calls(d / "deviation" / "cut")
+        dirs = (d, d / "deviation" / "control", d / "deviation" / "cut")
+        billed = [c for x in dirs for c in read_calls(x)]              # todas as chamadas pagas
+        calls = [c for x in dirs for c in read_calls(x, dedupe=True)]  # sem as repetidas na retomada
         row = {"run_id": d.name, "prompt": cfg["prefix"].split("+")[0], "alpha": cfg["alpha"],
                "seed": cfg["seed"], "model": cfg["model"], "status": st["status"],
                "reason": st.get("reason") or "", "periods_done": st.get("period", 0),
-               "calls": len(calls), "invalid_calls": sum(not c["valid"] for c in calls),
-               "prompt_tokens": sum(c["prompt_tokens"] for c in calls),
-               "output_tokens": sum(c["output_tokens"] for c in calls),
-               "thoughts_tokens": sum(c["thoughts_tokens"] for c in calls),
-               "cost_usd": round(sum(c["cost_usd"] for c in calls), 6),
+               "calls": len(calls), "calls_billed": len(billed), "invalid_calls": sum(not c["valid"] for c in calls),
+               "prompt_tokens": sum(c["prompt_tokens"] for c in billed),
+               "output_tokens": sum(c["output_tokens"] for c in billed),
+               "thoughts_tokens": sum(c["thoughts_tokens"] for c in billed),
+               "cost_usd": round(sum(c["cost_usd"] for c in billed), 6),
                "model_versions": "|".join(sorted({str(c["model_version"]) for c in calls})),
                "first_call_utc": min((c["time_utc"] for c in calls), default=""),
                "last_call_utc": max((c["time_utc"] for c in calls), default="")}
@@ -289,6 +304,10 @@ def main(argv=None):
     p = sub.add_parser("summarize"); common(p, budget=False); p.set_defaults(f=cmd_summarize)
 
     args = ap.parse_args(argv)
+    # Δ, →, — e acentos sem erro no PowerShell, mesmo com a saída gravada num arquivo
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         args.f(args)
     except PromptFilesMissing as e:

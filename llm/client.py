@@ -7,8 +7,9 @@ A chave fica só no arquivo .env da raiz do repositório (GEMINI_API_KEY=...), q
 
 Preços por 1M de tokens (US$), Pesquisa 7 (consulta em 07/10/2026) e documento do projeto
 (Tecnologias e custos). Os tokens de raciocínio ("thoughts") são cobrados como saída.
-O contador conta sempre o preço PAGO, mesmo na camada gratuita: é o custo "se fosse pago",
-o lado conservador do teto.
+O contador conta sempre o preço PAGO PADRÃO, mesmo na camada gratuita e mesmo pedindo Flex
+(nada confirma que a chamada foi atendida como Flex): é o custo "se fosse pago", o lado
+conservador do teto.
 
 Código próprio do projeto.
 """
@@ -34,11 +35,12 @@ PRICES = {
 
 
 def price_per_mtok(model: str, service_tier: str | None, today: dt.date | None = None):
+    """Preço padrão do dia. service_tier fica na assinatura para registro, mas o contador
+    não aplica o desconto do Flex (lado conservador)."""
     today = today or dt.datetime.now(dt.timezone.utc).date()
     for (lo, hi), (pin, pout) in PRICES[model]:
         if (lo is None or today >= lo) and (hi is None or today <= hi):
-            f = 0.5 if (service_tier or "").lower() == "flex" else 1.0
-            return pin * f, pout * f
+            return pin, pout
     raise KeyError(f"sem preço para {model} em {today}")
 
 
@@ -55,7 +57,16 @@ class RateLimited(RuntimeError):
 
 
 class TransientAPIError(RuntimeError):
-    """Erro temporário do servidor (5xx, tempo esgotado)."""
+    """Erro temporário: servidor (5xx), tempo esgotado (408) ou falha de rede."""
+
+
+class FatalAPIError(RuntimeError):
+    """Erro que esperar não resolve (chave inválida, modelo inexistente, saldo pré-pago zerado,
+    parâmetro recusado): a execução pausa com o motivo, para a Beatriz resolver e retomar."""
+
+
+BILLING_WORDS = ("billing", "prepay", "credit", "balance", "payment")
+HTTP_TIMEOUT_MS = 180_000   # 3 min por chamada; sem isso o SDK espera para sempre
 
 
 @dataclass
@@ -74,7 +85,10 @@ def load_api_key(env_file: Path = ROOT / ".env") -> str:
     """GEMINI_API_KEY do ambiente ou do arquivo .env (formato NOME=valor)."""
     key = os.environ.get("GEMINI_API_KEY")
     if not key and env_file.is_file():
-        for line in env_file.read_text(encoding="utf-8").splitlines():
+        raw = env_file.read_bytes()
+        # o Bloco de Notas pode gravar com BOM; o PowerShell 5 (echo >) grava em UTF-16
+        text = raw.decode("utf-16") if raw[:2] in (b"\xff\xfe", b"\xfe\xff") else raw.decode("utf-8-sig", errors="replace")
+        for line in text.splitlines():
             line = line.strip()
             if line.startswith("GEMINI_API_KEY="):
                 key = line.split("=", 1)[1].strip().strip('"').strip("'")
@@ -90,10 +104,12 @@ class GeminiClient:
     def __init__(self, model: str, temperature: float = 1.0, thinking_level: str | None = None,
                  service_tier: str | None = None, max_output_tokens: int | None = None):
         from google import genai  # importado só aqui: os testes sem API não precisam do SDK
+        from google.genai import types
         self.model, self.temperature = model, temperature
         self.thinking_level, self.service_tier = thinking_level, service_tier
         self.max_output_tokens = max_output_tokens
-        self._client = genai.Client(api_key=load_api_key())
+        self._client = genai.Client(api_key=load_api_key(),
+                                    http_options=types.HttpOptions(timeout=HTTP_TIMEOUT_MS))
 
     def settings(self) -> dict:
         return {"model": self.model, "temperature": self.temperature,
@@ -109,25 +125,39 @@ class GeminiClient:
             cfg["thinking_config"] = types.ThinkingConfig(thinking_level=self.thinking_level.upper())
         if self.service_tier:
             cfg["service_tier"] = self.service_tier.upper()
+        import httpx
         try:
             r = self._client.models.generate_content(
                 model=self.model, contents=user, config=types.GenerateContentConfig(**cfg))
         except errors.APIError as e:
+            msg = str(e)[:300]
+            if e.code == 429 and any(w in msg.lower() for w in BILLING_WORDS):
+                raise FatalAPIError(f"saldo ou cobrança: {msg}") from e
             if e.code == 429:
-                raise RateLimited(str(e)[:300]) from e
-            if e.code is not None and e.code >= 500:
-                raise TransientAPIError(str(e)[:300]) from e
-            raise
+                raise RateLimited(msg) from e
+            if e.code in (408, 499) or (e.code is not None and e.code >= 500):
+                raise TransientAPIError(msg) from e
+            raise FatalAPIError(f"HTTP {e.code}: {msg}") from e
+        except (httpx.TimeoutException, httpx.TransportError) as e:
+            raise TransientAPIError(f"rede: {type(e).__name__}: {str(e)[:200]}") from e
         u = r.usage_metadata
-        fin = None
+        fin, text = None, ""
         if r.candidates:
-            fin = str(r.candidates[0].finish_reason) if r.candidates[0].finish_reason else None
+            c0 = r.candidates[0]
+            fin = getattr(c0.finish_reason, "value", c0.finish_reason) if c0.finish_reason else None
+            text = "".join(p.text for p in (c0.content.parts if c0.content and c0.content.parts else [])
+                           if getattr(p, "text", None) and not getattr(p, "thought", False))
+        extra = {}
+        if r.prompt_feedback and r.prompt_feedback.block_reason:
+            extra["block_reason"] = str(getattr(r.prompt_feedback.block_reason, "value", r.prompt_feedback.block_reason))
+        if u and getattr(u, "traffic_type", None):
+            extra["traffic_type"] = str(getattr(u.traffic_type, "value", u.traffic_type))
         return CallResult(
-            text=r.text or "", model_version=r.model_version, response_id=r.response_id,
+            text=text, model_version=r.model_version, response_id=r.response_id,
             prompt_tokens=(u.prompt_token_count or 0) if u else 0,
             output_tokens=(u.candidates_token_count or 0) if u else 0,
             thoughts_tokens=(u.thoughts_token_count or 0) if u else 0,
-            finish_reason=fin)
+            finish_reason=fin, extra=extra)
 
 
 class FakeClient:
@@ -168,22 +198,41 @@ class Budget:
     def __init__(self, path: Path, ceiling_usd: float):
         self.path, self.ceiling = Path(path), float(ceiling_usd)
         self.spent = 0.0
+        self._reload()
+
+    def _reload(self):
+        """Relê o gasto do disco (outro terminal pode ter gastado); nunca diminui."""
         if self.path.is_file():
-            self.spent = float(json.loads(self.path.read_text())["spent_usd"])
+            self.spent = max(self.spent, float(json.loads(self.path.read_text(encoding="utf-8"))["spent_usd"]))
 
     def check(self, max_call_cost: float):
+        self._reload()
         if self.spent + max_call_cost > self.ceiling:
             raise BudgetExceeded(
                 f"teto de US$ {self.ceiling:.2f}: gasto {self.spent:.4f} + próxima chamada "
                 f"até {max_call_cost:.4f} passaria do teto")
 
     def add(self, cost: float):
+        self._reload()
         self.spent += cost
         tmp = self.path.with_suffix(".tmp")
         self.path.parent.mkdir(parents=True, exist_ok=True)
         tmp.write_text(json.dumps({"spent_usd": self.spent, "ceiling_usd": self.ceiling,
-                                   "updated": dt.datetime.now(dt.timezone.utc).isoformat()}))
-        tmp.replace(self.path)
+                                   "updated": dt.datetime.now(dt.timezone.utc).isoformat()}), encoding="utf-8")
+        safe_replace(tmp, self.path)
+
+
+def safe_replace(src: Path, dst: Path, tries: int = 20, sleep=time.sleep):
+    """Troca atômica com novas tentativas: no Windows, um arquivo aberto (Excel, OneDrive,
+    antivírus) bloqueia a troca por alguns instantes."""
+    for k in range(tries):
+        try:
+            src.replace(dst)
+            return
+        except PermissionError:
+            if k == tries - 1:
+                raise
+            sleep(0.5)
 
 
 def call_with_backoff(client, system, user, seed, *, sleep=time.sleep, max_waits=60,

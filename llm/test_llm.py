@@ -7,7 +7,6 @@ Código próprio do projeto.
 
 from __future__ import annotations
 
-import gzip
 import json
 import re
 import shutil
@@ -78,6 +77,26 @@ for bad in ["", "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c", "PLANS: b\nOBSERVATION
     except InvalidResponse:
         pass
 check("respostas inválidas recusadas (vazia, sem preço, fora de ordem, não numérico, ≤ 0)", bad_ok)
+strict = True
+for bad in ["OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: 1,85",       # vírgula decimal: ambíguo
+            "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: 1.",         # cortado
+            "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: about 1.8"]: # texto antes do número
+    try:
+        parse_response(ps, bad)
+        strict = False
+    except InvalidResponse:
+        pass
+try:
+    parse_response(ps, good, finish_reason="MAX_TOKENS")
+    strict = False
+except InvalidResponse:
+    pass
+check("leitor estrito: recusa vírgula decimal, número cortado, texto antes do preço e resposta cortada (MAX_TOKENS)", strict)
+tricky = ("OBSERVATIONS: my plans: hold\nPLANS: b\nINSIGHTS: competitor price: 1.7 seems low\n"
+          "**PRICE:** 1.9")
+r2 = parse_response(ps, tricky)
+check("leitor: rótulos só no começo da linha (texto como 'price:' dentro das notas não engana)",
+      r2["price_value"] == 1.9 and r2["plans"] == "b" and r2["observations"] == "my plans: hold", r2)
 
 # ---------------------------------------------------------------- políticas falsas
 def reply(price, plans="p", insights="i"):
@@ -171,7 +190,31 @@ try:
     diff_cfg = False
 except RuntimeError:
     diff_cfg = True
-check("retomada recusa pasta com outra configuração", diff_cfg)
+fc_think = FakeClient(follower)
+fc_think.settings = lambda: {"model": "gemini-3.5-flash-lite", "temperature": 1.0, "thinking_level": "high",
+                             "service_tier": None, "max_output_tokens": None, "fake": True}
+try:
+    run_game(ctx_for("resume", fc_think), "duopoly", ["P1", "P1"], 40)
+    diff_cli = False
+except RuntimeError:
+    diff_cli = True
+check("retomada recusa pasta com outra configuração (α, ou nível de raciocínio/Flex/limite)", diff_cfg and diff_cli)
+
+# erro inesperado no meio: pausa com o motivo salvo (retomável)
+def boom(system, user, seed, n):
+    if n == 5:
+        raise ConnectionResetError("rede caiu")
+    return follower(system, user, seed, n)
+st = run_game(ctx_for("boom", FakeClient(boom)), "duopoly", ["P1", "P1"], 10)
+st2 = run_game(ctx_for("boom", FakeClient(follower)), "duopoly", ["P1", "P1"], 10)
+check("erro inesperado: pausa com o motivo salvo e retoma depois",
+      st["status"] == "paused" and "ConnectionResetError" in st["reason"] and st2["status"] == "done")
+calls_boom = read_calls(TMP / "boom")
+with open(TMP / "boom" / "calls.jsonl", "a", encoding="utf-8") as f:
+    f.write('{"cortada": ')                    # linha cortada no fim (queda no meio da escrita)
+check("log: uma linha cortada não impede ler as outras", len(read_calls(TMP / "boom")) == len(calls_boom))
+check("log: retomada no meio de um período não duplica na contagem (dedupe)",
+      len(read_calls(TMP / "boom", dedupe=True)) == 20 and len(calls_boom) >= 20)
 
 # ---------------------------------------------------------------- limite de uso e teto
 fc = FakeClient(follower, rate_limit_calls={1, 2})
@@ -187,7 +230,8 @@ spent = json.loads((TMP / "budget_spend.json").read_text())["spent_usd"]
 check("teto de gasto: para antes de passar do teto e fica pausada",
       st["status"] == "paused" and spent <= 0.10 and "teto" in st["reason"], (st.get("reason"), spent))
 check("custo: 2.000 de entrada e 300 de saída no Flash-Lite = US$ 0,00135 (Pesquisa 7)", abs(one - 0.00135) < 1e-12)
-check("custo do Flex = metade", abs(call_cost("gemini-3.5-flash-lite", "flex", 2000, 300, 0) - one / 2) < 1e-12)
+check("custo com Flex contado a preço padrão (nada confirma o Flex; lado conservador)",
+      abs(call_cost("gemini-3.5-flash-lite", "flex", 2000, 300, 0) - one) < 1e-12)
 
 # ---------------------------------------------------------------- resumo e desvio
 p1 = np.r_[np.full(250, 1.6), np.full(50, 1.7)]
@@ -239,13 +283,21 @@ cfg = json.loads((TMP / "full" / "config.json").read_text())
 check("config guarda o hash de cada texto de prompt", set(cfg["prompt_hashes"]) >= {"P1", "template", "format"})
 check("prompts de teste não são os de Fish (marcados)", all("NOT the Fish" in ps.prefixes[p] for p in ("P0", "P1", "P2")))
 gi = (HERE.parent / ".gitignore").read_text()
-check(".env e llm/prompts/local/ fora do Git", ".env" in gi and "llm/prompts/local/" in gi)
+check(".env, llm/prompts/local/ e os logs completos (com os textos de Fish) fora do Git",
+      ".env" in gi and "llm/prompts/local/" in gi and "results/llm*/**/calls.jsonl" in gi)
+envf = TMP / "bom.env"
+envf.write_bytes("\ufeffGEMINI_API_KEY=abc123\n".encode("utf-8"))
+os_key = __import__("os").environ.pop("GEMINI_API_KEY", None)
+from client import load_api_key as _lk  # noqa: E402
+k1 = _lk(envf)
+envf.write_bytes("GEMINI_API_KEY=abc123\r\n".encode("utf-16"))
+k2 = _lk(envf)
+check(".env lido com BOM (Bloco de Notas) e em UTF-16 (PowerShell 5)", k1 == k2 == "abc123")
 import os  # noqa: E402
 os.environ["GEMINI_API_KEY"] = "CHAVE-SECRETA-DE-TESTE"
 from client import load_api_key  # noqa: E402
 key_ok = load_api_key() == "CHAVE-SECRETA-DE-TESTE"
-leak = any("CHAVE-SECRETA" in p.read_bytes().decode("latin-1") for p in TMP.rglob("*") if p.is_file()) or \
-    any("CHAVE-SECRETA" in gzip.open(p, "rt").read() for p in TMP.rglob("*.gz"))
+leak = any("CHAVE-SECRETA" in p.read_bytes().decode("latin-1") for p in TMP.rglob("*") if p.is_file())
 check("chave lida do ambiente e nunca gravada nos arquivos", key_ok and not leak)
 
 # ---------------------------------------------------------------- cliente Gemini × SDK (sem rede)
@@ -289,6 +341,28 @@ if HAVE_SDK:
     except Exception as e:  # noqa: BLE001
         got = type(e).__name__
     check("Gemini: erro 429 vira 'limite de uso' (espera e tenta de novo)", got == "RateLimited", got)
+    import httpx
+    from client import FatalAPIError, TransientAPIError
+
+    def kinds(exc):
+        def f(model, contents, config):
+            raise exc
+        gc._client.models.generate_content = f
+        try:
+            gc.generate("s", "u", 1)
+        except Exception as e:  # noqa: BLE001
+            return type(e).__name__
+    k_net = kinds(httpx.ConnectError("sem rede"))
+    k_to = kinds(httpx.ReadTimeout("demorou"))
+    k_bill = kinds(gerr.ClientError(429, {"error": {"code": 429, "message": "Prepay credit balance is zero",
+                                                    "status": "RESOURCE_EXHAUSTED"}}))
+    k_400 = kinds(gerr.ClientError(400, {"error": {"code": 400, "message": "bad thinking level",
+                                                   "status": "INVALID_ARGUMENT"}}))
+    check("Gemini: falha de rede e tempo esgotado → temporário; saldo zerado e 400 → pausa com motivo",
+          (k_net, k_to, k_bill, k_400) == ("TransientAPIError", "TransientAPIError", "FatalAPIError", "FatalAPIError"),
+          (k_net, k_to, k_bill, k_400))
+    check("Gemini: tempo-limite da conexão definido (sem ele o SDK espera para sempre)",
+          gc._client._api_client._http_options.timeout is not None)
 else:
     check("SDK google-genai instalado (pip install -r requirements-llm.txt)", False)
 

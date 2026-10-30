@@ -150,7 +150,9 @@ def deviation_metrics(mk: Market, ctrl, dev, alpha: float, beta: float = BETA) -
     pi_c = np.array([mk.outcome(ctrl[t], alpha, beta)[1][0] for t in range(T_DEV + 1)])
     pi_d = np.array([mk.outcome(dev[t], alpha, beta)[1][0] for t in range(T_DEV + 1)])
     w = DEV_DISCOUNT ** np.arange(T_DEV)
-    G = float((w * (pi_d[1:] - pi_c[1:])).sum() / (w * pi_c[1:]).sum())
+    den = float((w * pi_c[1:]).sum())
+    # lucro do controle ≤ 0 (preços no custo ou abaixo): G não tem sentido e fica sem valor
+    G = float((w * (pi_d[1:] - pi_c[1:])).sum() / den) if den > 0 else float("nan")
     tol = mk.grid_step * (1 + 1e-9)
     V = None
     for tau in range(2, T_DEV - RUN_LEN + 2):

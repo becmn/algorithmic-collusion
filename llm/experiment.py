@@ -14,7 +14,7 @@ Arquivos de cada execução (pasta results/llm/<run_id>/, ou results/llm_pilot/ 
   config.json     parâmetros, modelo, hash SHA-256 de cada texto de prompt usado
   state.json      período concluído, notas e histórico de cada firma, situação
   periods.csv     preços, quantidades e lucros por período (com escala)
-  calls.jsonl.gz  uma linha por chamada: prompt, resposta, preço extraído, tokens, modelo,
+  calls.jsonl     uma linha por chamada: prompt, resposta, preço extraído, tokens, modelo,
                   versão devolvida, data, temperatura, seed, nível de raciocínio, custo
   deviation/      ramos de controle e de corte e deviation.json (R, G, V, placebo, classes)
 
@@ -26,14 +26,14 @@ from __future__ import annotations
 import copy
 import csv
 import datetime as dt
-import gzip
 import hashlib
 import json
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-from client import Budget, BudgetExceeded, RateLimited, TransientAPIError, call_cost, call_with_backoff
+from client import (Budget, BudgetExceeded, FatalAPIError, RateLimited, TransientAPIError, call_cost,
+                    call_with_backoff, safe_replace)
 from market import MAX_RETRIES, PERIODS, Market, competence_summary, deviation_metrics, duopoly_summary
 from prompts import InvalidResponse, PromptSet, parse_response, user_prompt
 
@@ -103,20 +103,38 @@ def write_json(path: Path, obj):
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
     tmp.write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
-    tmp.replace(path)   # troca atômica: um arquivo nunca fica pela metade
+    safe_replace(tmp, path)   # troca atômica: um arquivo nunca fica pela metade
 
 
 def log_call(run_dir: Path, rec: dict):
-    with gzip.open(run_dir / "calls.jsonl.gz", "at", encoding="utf-8") as f:
+    """Uma linha JSON por chamada, em texto simples (se o programa cair no meio de uma
+    linha, só ela se perde; as outras continuam legíveis)."""
+    with open(run_dir / "calls.jsonl", "a", encoding="utf-8") as f:
         f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        f.flush()
 
 
-def read_calls(run_dir: Path) -> list:
-    p = run_dir / "calls.jsonl.gz"
+def read_calls(run_dir: Path, dedupe: bool = False) -> list:
+    """Lê o log; ignora uma linha cortada. dedupe=True mantém só o último registro de cada
+    (fase, período, firma, tentativa): uma interrupção no meio de um período faz a mesma
+    decisão ser pedida de novo na retomada (o custo das duas fica no total)."""
+    p = run_dir / "calls.jsonl"
     if not p.is_file():
         return []
-    with gzip.open(p, "rt", encoding="utf-8") as f:
-        return [json.loads(line) for line in f if line.strip()]
+    out = []
+    with open(p, encoding="utf-8") as f:
+        for line in f:
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    if dedupe:
+        last = {}
+        for i, c in enumerate(out):
+            last[(c["phase"], c["period"], c["firm"], c["attempt"])] = i
+        keep = set(last.values())
+        out = [c for i, c in enumerate(out) if i in keep]
+    return out
 
 
 PERIOD_COLS = ["period", "price_1", "price_2", "qty_1", "qty_2", "profit_1", "profit_2"]
@@ -129,7 +147,7 @@ def write_periods(run_dir: Path, rows: list):
         w.writeheader()
         for r in rows:
             w.writerow({k: r.get(k, "") for k in PERIOD_COLS})
-    tmp.replace(run_dir / "periods.csv")
+    safe_replace(tmp, run_dir / "periods.csv")
 
 
 def read_periods(run_dir: Path) -> list:
@@ -161,6 +179,8 @@ def decide(ctx: Context, agent: AgentState, period: int, phase: str, monopoly: b
             res = call_with_backoff(ctx.client, system, user, seed, sleep=ctx.sleep, log=ctx.log)
         except (RateLimited, TransientAPIError) as e:
             raise RunPaused(f"limite de uso ou erro do servidor: {e}") from e
+        except FatalAPIError as e:
+            raise RunPaused(f"erro da API (resolver e retomar): {e}") from e
         latency = time.time() - t0
         cost = call_cost(ctx.client.model, ctx.client.service_tier, res.prompt_tokens,
                          res.output_tokens, res.thoughts_tokens)
@@ -171,11 +191,11 @@ def decide(ctx: Context, agent: AgentState, period: int, phase: str, monopoly: b
                **{k: v for k, v in ctx.client.settings().items()},
                "seed": seed, "model_version": res.model_version, "response_id": res.response_id,
                "finish_reason": res.finish_reason, "system_prompt": system, "user_prompt": user,
-               "response": res.text, "prompt_tokens": res.prompt_tokens,
+               "response": res.text, **res.extra, "prompt_tokens": res.prompt_tokens,
                "output_tokens": res.output_tokens, "thoughts_tokens": res.thoughts_tokens,
                "cost_usd": cost, "latency_s": round(latency, 3)}
         try:
-            parsed = parse_response(ps, res.text)
+            parsed = parse_response(ps, res.text, res.finish_reason)
         except InvalidResponse as e:
             rec.update(valid=False, error=str(e), price=None)
             log_call(ctx.run_dir, rec)
@@ -224,7 +244,8 @@ def _load_or_init(ctx: Context, config: dict, agents: list):
     cfg_path = ctx.run_dir / "config.json"
     if st_path.is_file():
         old = json.loads(cfg_path.read_text(encoding="utf-8"))
-        same = {k: old.get(k) for k in ("kind", "prefix", "alpha", "seed", "periods", "model", "prompt_hashes")}
+        same = {k: old.get(k) for k in ("kind", "prefix", "alpha", "seed", "periods", "model", "prompt_hashes",
+                                        "client")}
         new = {k: config.get(k) for k in same}
         if same != new:
             raise RuntimeError(f"{ctx.run_dir} já existe com outra configuração: {same} × {new}")
@@ -274,6 +295,8 @@ def run_game(ctx: Context, kind: str, prefixes: list, periods: int = PERIODS) ->
         return _finish(ctx, "stopped", str(e))
     except RunPaused as e:
         return _finish(ctx, "paused", str(e))
+    except Exception as e:  # noqa: BLE001 — erro inesperado: salva o motivo; retoma depois
+        return _finish(ctx, "paused", f"erro inesperado: {type(e).__name__}: {str(e)[:300]}")
     if not rows or len(rows) < periods:   # nada a fazer (já estava completo)
         rows = read_periods(ctx.run_dir)
     p1 = [r["price_1"] for r in rows]
@@ -318,6 +341,10 @@ def run_deviation(ctx: Context, base_dir: Path) -> dict:
             except RunPaused as e:
                 _finish(bctx, "paused", str(e))
                 return {"status": "paused", "reason": str(e)}
+            except Exception as e:  # noqa: BLE001
+                reason = f"erro inesperado: {type(e).__name__}: {str(e)[:300]}"
+                _finish(bctx, "paused", reason)
+                return {"status": "paused", "reason": reason}
             _finish(bctx, "done", None)
         rows = read_periods(bctx.run_dir)
         paths[branch] = [p0] + [[r["price_1"], r["price_2"]] for r in rows]

@@ -118,40 +118,47 @@ def user_prompt(ps: PromptSet, *, cost: float, ceiling: float, plans: str, insig
 # ---------------------------------------------------------------------------
 # Leitura da resposta
 # ---------------------------------------------------------------------------
-NUM = re.compile(r"[-+]?\d[\d,]*(?:\.\d+)?|[-+]?\.\d+")
+# Preço: só o número no começo do campo, com $ opcional e separador de milhar em grupos de 3.
+# Recusa "1," / "1." (resposta cortada) e "1,85" (vírgula decimal: ambíguo).
+PRICE = re.compile(r"\s*\$?\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)(?![\d.,])")
 
 
 class InvalidResponse(ValueError):
     pass
 
 
-def parse_response(ps: PromptSet, text: str) -> dict:
-    """Separa os 4 campos pela ordem dos rótulos e extrai o preço (primeiro número depois do
-    rótulo do preço). Resposta inválida: falta rótulo, ordem errada, preço ausente, não
-    numérico ou ≤ 0. Preço acima do monopólio é válido (é só sinalizado na análise)."""
+def _label_re(label: str):
+    """Rótulo no começo de uma linha (aceita espaços, *, # ou > antes, como em markdown)."""
+    return re.compile(r"(?im)^[ \t>*#_-]*" + re.escape(label.strip()))
+
+
+def parse_response(ps: PromptSet, text: str, finish_reason: str | None = None) -> dict:
+    """Separa os 4 campos pelos rótulos, cada um no começo de uma linha e na ordem do
+    Protocolo, e extrai o preço do ÚLTIMO rótulo de preço. Resposta inválida: cortada
+    (finish_reason diferente de STOP), rótulo ausente ou fora de ordem, preço ausente,
+    ilegível, com vírgula decimal ou ≤ 0. Preço acima do monopólio é válido (só sinalizado)."""
+    if finish_reason is not None and str(finish_reason).upper() not in ("STOP", "FINISHREASON.STOP"):
+        raise InvalidResponse(f"resposta não terminou normalmente (finish_reason = {finish_reason})")
     if not isinstance(text, str) or not text.strip():
         raise InvalidResponse("resposta vazia")
     labels = ps.fmt["labels"]
-    low = text.lower()
     pos, start = {}, 0
     for f in FIELDS:
-        i = low.find(labels[f].lower(), start)
-        if i < 0:
+        found = [m for m in _label_re(labels[f]).finditer(text) if m.start() >= start]
+        if not found:
             raise InvalidResponse(f"rótulo ausente ou fora de ordem: {labels[f]!r}")
-        pos[f] = i
-        start = i + len(labels[f])
+        m = found[-1] if f == "price" else found[0]
+        pos[f] = (m.start(), m.end())
+        start = m.end()
     out = {}
     for k, f in enumerate(FIELDS):
-        a = pos[f] + len(labels[f])
-        b = pos[FIELDS[k + 1]] if k + 1 < len(FIELDS) else len(text)
+        a = pos[f][1]
+        b = pos[FIELDS[k + 1]][0] if k + 1 < len(FIELDS) else len(text)
         out[f] = text[a:b].strip().lstrip(":").strip()
-    m = NUM.search(out["price"].replace("$", ""))
+    m = PRICE.match(out["price"].strip("*_ `"))
     if not m:
-        raise InvalidResponse("preço ausente")
-    try:
-        price = float(m.group(0).replace(",", ""))
-    except ValueError as e:
-        raise InvalidResponse(f"preço ilegível: {m.group(0)!r}") from e
+        raise InvalidResponse(f"preço ausente ou ilegível: {out['price'][:40]!r}")
+    price = float(m.group(1).replace(",", ""))
     if not math.isfinite(price) or price <= 0:
         raise InvalidResponse(f"preço inválido: {price}")
     out["price_value"] = price
