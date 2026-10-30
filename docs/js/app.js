@@ -87,6 +87,94 @@
     return [g[0] - 0.02, g[g.length - 1] + 0.02];
   }
 
+
+  // ------------------------------------------------------------------ valores ao passar o mouse
+  // Cada gráfico registra um "modelo": quantos pontos tem, qual ponto fica sob o cursor e o que
+  // mostrar nele. Mouse, toque e teclado (setas, Esc) usam o mesmo modelo. As tabelas de dados
+  // continuam sendo a alternativa em texto (os leitores de tela não leem a caixinha).
+  const HOVER = {};
+  const tipState = { id: null, i: -1 };
+  function tipEls(id) {
+    const el = $(id), fig = el.parentElement;
+    let tip = fig.querySelector(":scope > .tip");
+    if (!tip) {
+      tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; tip.setAttribute("aria-hidden", "true");
+      const guide = document.createElement("div"); guide.className = "tip-guide"; guide.hidden = true;
+      const dots = document.createElement("div"); dots.className = "tip-dots";
+      fig.appendChild(guide); fig.appendChild(dots); fig.appendChild(tip);
+    }
+    return { el, fig, tip, guide: fig.querySelector(":scope > .tip-guide"), dots: fig.querySelector(":scope > .tip-dots") };
+  }
+  function hideTip(id) {
+    const ids = id ? [id] : Object.keys(HOVER);
+    ids.forEach((k) => {
+      const e = $(k) && $(k).parentElement;
+      if (!e) return;
+      e.querySelectorAll(":scope > .tip, :scope > .tip-guide").forEach((n) => { n.hidden = true; });
+      const d = e.querySelector(":scope > .tip-dots"); if (d) d.innerHTML = "";
+    });
+    if (!id || tipState.id === id) { tipState.id = null; tipState.i = -1; }
+  }
+  function showTip(id, i) {
+    const model = HOVER[id];
+    if (!model || !model.n) { hideTip(id); return; }
+    i = Math.max(0, Math.min(model.n - 1, i));
+    const p = model.at(i);
+    const { el, fig, tip, guide, dots } = tipEls(id);
+    const er = el.getBoundingClientRect(), fr = fig.getBoundingClientRect();
+    const k = er.width / model.w, ox = er.left - fr.left, oy = er.top - fr.top;
+    tip.innerHTML = `<strong>${esc(p.title)}</strong>` + p.rows.map((r) =>
+      `<span class="tip-row">${r.color ? `<i style="background:${r.color}"></i>` : ""}${esc(r.label)}: <b>${esc(r.value)}</b></span>`).join("");
+    tip.hidden = false;
+    if (p.guideX !== undefined) {
+      guide.hidden = false;
+      guide.style.left = (ox + p.guideX * k) + "px"; guide.style.top = (oy + model.top * k) + "px";
+      guide.style.height = ((model.bottom - model.top) * k) + "px";
+    } else guide.hidden = true;
+    dots.innerHTML = (p.dots || []).map((d) =>
+      `<span class="tip-dot" style="left:${ox + d.x * k}px;top:${oy + d.y * k}px;background:${d.color}"></span>`).join("");
+    const ax = ox + p.anchorX * k, ay = oy + p.anchorY * k;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = p.preferLeft ? ax - 14 - tw : ax + 14;
+    if (p.preferLeft && left < 0) left = ax + 14;
+    if (left + tw > fr.width) left = ax - 14 - tw;
+    tip.style.left = Math.max(0, left) + "px";
+    tip.style.top = Math.max(0, Math.min(fr.height - th, ay - th / 2)) + "px";
+    tipState.id = id; tipState.i = i;
+  }
+  function attachHover(id) {
+    const el = $(id);
+    el.tabIndex = 0;
+    const pick = (ev) => {
+      const model = HOVER[id];
+      if (!model || !model.n) return -1;
+      const r = el.getBoundingClientRect(), k = model.w / r.width;
+      return model.pick((ev.clientX - r.left) * k, (ev.clientY - r.top) * k);
+    };
+    el.addEventListener("pointermove", (ev) => { const i = pick(ev); if (i >= 0) showTip(id, i); else hideTip(id); });
+    el.addEventListener("pointerdown", (ev) => { const i = pick(ev); if (i >= 0) showTip(id, i); });
+    el.addEventListener("pointerleave", (ev) => { if (ev.pointerType === "mouse") hideTip(id); });
+    el.addEventListener("focus", () => { const m = HOVER[id]; if (m && m.n) showTip(id, tipState.id === id ? tipState.i : m.n - 1); });
+    el.addEventListener("blur", () => hideTip(id));
+    el.addEventListener("keydown", (ev) => {
+      const m = HOVER[id];
+      if (!m || !m.n) return;
+      const cur = tipState.id === id ? tipState.i : m.n - 1;
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ev.key];
+      if (step) { ev.preventDefault(); showTip(id, cur + step); }
+      else if (ev.key === "Home") { ev.preventDefault(); showTip(id, 0); }
+      else if (ev.key === "End") { ev.preventDefault(); showTip(id, m.n - 1); }
+      else if (ev.key === "Escape") hideTip(id);
+    });
+  }
+  // depois de redesenhar, a caixinha aberta acompanha os dados novos
+  function refreshTip(id) { if (tipState.id === id) showTip(id, Math.min(tipState.i, (HOVER[id] || { n: 0 }).n - 1)); }
+  const nearestIndex = (xs, v) => {
+    let best = -1, bd = Infinity;
+    xs.forEach((x, i) => { const d = Math.abs(x - v); if (d < bd) { bd = d; best = i; } });
+    return best;
+  };
+
   // Gráfico do aprendizado: preço médio por bloco de 10.000 períodos.
   function drawLearning() {
     const el = $("learn-chart");
@@ -114,6 +202,23 @@
     s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
     s += `<line x1="${m.l}" x2="${f.w - m.r}" y1="${f.h - m.b}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
     el.innerHTML = s + "</svg>";
+    const xs = blocks.map((b) => x(b.t_start + b.n_periods / 2));
+    HOVER["learn-chart"] = {
+      n: blocks.length, w: f.w, top: m.t, bottom: f.h - m.b,
+      pick: (px) => (px < m.l - 4 || px > f.w - m.r + 4 ? -1 : nearestIndex(xs, px)),
+      at: (i) => {
+        const b = blocks[i];
+        return {
+          title: t("tip_periods", { a: num(b.t_start + 1, 0), b: num(b.t_start + b.n_periods, 0) }),
+          rows: [{ label: t("firm_a"), value: num(b.price_firm1, 3), color: "#1d4e89" },
+                 { label: t("firm_b"), value: num(b.price_firm2, 3), color: "#c2410c" },
+                 { label: t("th_delta_block"), value: num(b.delta, 3) }],
+          guideX: xs[i], dots: [{ x: xs[i], y: y(b.price_firm1), color: "#1d4e89" }, { x: xs[i], y: y(b.price_firm2), color: "#c2410c" }],
+          anchorX: xs[i], anchorY: (y(b.price_firm1) + y(b.price_firm2)) / 2,
+        };
+      },
+    };
+    refreshTip("learn-chart");
   }
 
   // Gráfico do desvio: degraus de τ = 0 a T_DEV, ramo com corte × ramo sem corte.
@@ -157,6 +262,22 @@
     s += `<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
     s += `<line x1="${m.l}" x2="${f.w - m.r}" y1="${f.h - m.b}" y2="${f.h - m.b}" stroke="#4a4f58"/>`;
     el.innerHTML = s + "</svg>";
+    const nShown = d ? Math.min(NT, S.devShown) : 0;
+    HOVER["dev-chart"] = {
+      n: nShown, w: f.w, top: m.t, bottom: f.h - m.b,
+      pick: (px) => (px < m.l - 4 || px > f.w - m.r + 4 ? -1 : Math.max(0, Math.min(nShown - 1, Math.floor((px - m.l) / ((x(1) - x(0)) || 1))))),
+      at: (k) => {
+        const c = d.control.price[k], v = d.deviation.price[k], xc = x(k + 0.5);
+        return {
+          title: t("tip_tau", { k: k }),
+          rows: [{ label: t("th_a_cut"), value: num(v[0], 3), color: "#1d4e89" }, { label: t("th_b_cut"), value: num(v[1], 3), color: "#c2410c" },
+                 { label: t("th_a_nocut"), value: num(c[0], 3), color: "#7a7e86" }, { label: t("th_b_nocut"), value: num(c[1], 3), color: "#7a7e86" }],
+          guideX: xc, dots: [{ x: xc, y: y(v[0]), color: "#1d4e89" }, { x: xc, y: y(v[1]), color: "#c2410c" }],
+          anchorX: xc, anchorY: (y(v[0]) + y(v[1])) / 2,
+        };
+      },
+    };
+    refreshTip("dev-chart");
   }
 
   // Gráfico do teste de separação: Δ com e sem memória por condição, com IC 95%.
@@ -188,6 +309,22 @@
       s += `<rect x="${x(r.delta_k0) - 4.5}" y="${yO - 4.5}" width="9" height="9" fill="#fbfbf8" stroke="#c2410c" stroke-width="2.5"/>`;
     });
     el.innerHTML = s + "</svg>";
+    const ci = (v, a, b) => `${num(v, 3)} [${num(a, 3)}; ${num(b, 3)}]`;
+    HOVER["sep-chart"] = {
+      n: rows.length, w: w,
+      pick: (px, py) => { const i = Math.floor((py - top) / rowH); return i >= 0 && i < rows.length ? i : -1; },
+      at: (i) => {
+        const r = rows[i], yW = top + i * rowH + fs + 10;
+        return {
+          title: `${t(condKey(r.level))} (${techLabel(r.level)})`,
+          rows: [{ label: t("sep_with"), value: ci(r.delta_k1, r.delta_k1_lo, r.delta_k1_hi), color: "#1d4e89" },
+                 { label: t("sep_without"), value: ci(r.delta_k0, r.delta_k0_lo, r.delta_k0_hi), color: "#c2410c" }],
+          // caixinha à esquerda dos dois pontos (que ficam quase sempre à direita do gráfico)
+          anchorX: Math.min(x(r.delta_k1), x(r.delta_k0)) - 10, anchorY: yW + 5, preferLeft: true,
+        };
+      },
+    };
+    refreshTip("sep-chart");
   }
   const condKey = (level) => "cond_" + level.replace(/[-.]/g, "_");
   // Parâmetro técnico de cada condição, montado do nível gravado no JSON (ex.: "beta4e-06").
@@ -235,6 +372,19 @@
     s += `<text x="${x(0)}" y="${ya + fs * 2.3}" font-size="${fs * 0.85}" fill="#4a4f58" font-style="italic">${esc(t("axis_competition"))}</text>`;
     s += `<text x="${x(1)}" y="${ya + fs * 2.3}" font-size="${fs * 0.85}" fill="#4a4f58" font-style="italic" text-anchor="end">${esc(t("axis_monopoly"))}</text>`;
     el.innerHTML = s + "</svg>";
+    HOVER["sep-main"] = {
+      n: bars.length, w: w,
+      pick: (px, py) => { const i = Math.floor((py - top) / rowH); return i >= 0 && i < bars.length ? i : -1; },
+      at: (i) => {
+        const [key, v, lo, hi, col] = bars[i];
+        return {
+          title: t(key), rows: [{ label: t("tip_mean"), value: num(v, 3), color: col },
+                                { label: t("tip_ci"), value: `${num(lo, 3)} – ${num(hi, 3)}` }],
+          anchorX: Math.min(x(v), w * 0.6), anchorY: top + i * rowH + fs * 1.6 + barH / 2,
+        };
+      },
+    };
+    refreshTip("sep-main");
   }
 
   // ------------------------------------------------------------------ textos e tabelas
@@ -607,6 +757,8 @@
         $("btn-run").addEventListener("click", onRun);
         $("btn-deviate").addEventListener("click", onDeviate);
         $("btn-new").addEventListener("click", () => { if (S.memory === "with") startLive(randomSeed()); });
+        ["learn-chart", "dev-chart", "sep-main", "sep-chart"].forEach(attachHover);
+        document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") hideTip(); });
         $("mem-with").addEventListener("click", () => setMemory("with"));
         $("mem-without").addEventListener("click", () => setMemory("without"));
         // o gráfico das 7 condições fica recolhido: desenha com a largura certa ao abrir

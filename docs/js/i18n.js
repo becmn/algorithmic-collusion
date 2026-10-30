@@ -116,6 +116,11 @@
 
       aggregate: "Em {n} sessões com os parâmetros do artigo, o Δ médio foi {mean} (IC 95%: {lo} a {hi}), em que 0 é o lucro competitivo e 1, o de monopólio.",
       data_table_summary: "Ver os dados do gráfico",
+      chart_hint: "Passe o mouse ou toque nos gráficos para ver os valores exatos.",
+      tip_periods: "Períodos {a} a {b}",
+      tip_tau: "Período {k} depois do corte",
+      tip_mean: "Δ médio",
+      tip_ci: "IC 95%",
       th_periods: "Período (milhões)",
       th_price_a: "Preço A",
       th_price_b: "Preço B",
@@ -339,6 +344,11 @@
 
       aggregate: "Across {n} sessions with the paper's parameters, mean Δ was {mean} (95% CI: {lo} to {hi}), where 0 is the competitive profit and 1 the monopoly profit.",
       data_table_summary: "Show the chart data",
+      chart_hint: "Hover over or tap the charts to see the exact values.",
+      tip_periods: "Periods {a} to {b}",
+      tip_tau: "Period {k} after the cut",
+      tip_mean: "Mean Δ",
+      tip_ci: "95% CI",
       th_periods: "Period (millions)",
       th_price_a: "Price A",
       th_price_b: "Price B",
