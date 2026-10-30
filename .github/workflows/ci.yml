@@ -35,6 +35,9 @@ jobs:
         run: |
           pip install -r requirements-llm.txt
           python llm/test_llm.py
+      - name: Análise Q-learning × LLM com dados sintéticos (plano estatístico)
+        env: {PYTHONIOENCODING: utf-8}
+        run: python analysis/test_llm_compare.py
 
   javascript:
     name: JavaScript (motor do simulador)
