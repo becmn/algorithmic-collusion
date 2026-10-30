@@ -196,7 +196,11 @@ td.em { color: var(--firm-b); font-weight: 700; }
 .seg + .seg { border-left: 0; }
 .seg[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 .seg:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.mem-note { margin-top: -4px; }
+/* nota do modo sem memória: bloco próprio, separado da legenda da figura */
+.mem-note { margin: 4px 0 22px; padding: 6px 0 6px 12px; border-left: 3px solid var(--firm-b); max-width: 62ch; }
+#dev-mem-note { margin: 8px 0 18px; }
+/* selo da Figura 1 numa linha própria, abaixo do título */
+.figcap .badge { display: block; margin: 4px 0 0; }
 
 /* Figura 3: resultado em destaque e as condições recolhidas */
 .sep-result { font-size: 1.05rem; }
