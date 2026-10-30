@@ -94,6 +94,29 @@ check("leitor estrito: recusa vírgula decimal, texto antes do preço e resposta
 oks = [parse_response(ps, "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: " + v)["price_value"]
        for v in ("$1.85.", "1.85 dollars", "**1.85**", "1.85\n")]
 check("leitor aceita ponto final, unidade depois do número e negrito", oks == [1.85] * 4, oks)
+md = ["OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\n**PRICE**: 1.85",
+      "1. OBSERVATIONS: a\n2. PLANS: b\n3. INSIGHTS: c\n4. PRICE: 1.85",
+      "| OBSERVATIONS: | a |\n| PLANS: | b |\n| INSIGHTS: | c |\n| PRICE: | 1.85 |",
+      "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: $**1.85**",
+      'OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: "1.85"',
+      "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: [1.85]",
+      "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: \\boxed{1.85}",
+      "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: USD 1.85",
+      "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE:\n1.85"]
+got = []
+for t in md:
+    try:
+        got.append(parse_response(ps, t)["price_value"])
+    except InvalidResponse as e:
+        got.append(str(e))
+check("leitor aceita markdown comum do Gemini (negrito, numeração, tabela, aspas, colchetes, \\boxed, USD)",
+      got == [1.85] * len(md), got)
+try:
+    parse_response(ps, "OBSERVATIONS: a\nPLANS: b\nINSIGHTS: c\nPRICE: 1e2")
+    sci = False
+except InvalidResponse:
+    sci = True
+check("leitor recusa notação científica (1e2 não vira 1)", sci)
 tricky = ("OBSERVATIONS: my plans: hold\nPLANS: b\nINSIGHTS: competitor price: 1.7 seems low\n"
           "**PRICE:** 1.9")
 r2 = parse_response(ps, tricky)
@@ -226,6 +249,28 @@ check("limite de uso (429): espera e tenta de novo, sem contar como inválida", 
 fc = FakeClient(follower, rate_limit_calls=set(range(1, 100)))
 st = run_game(ctx_for("rl", fc), "duopoly", ["P1", "P1"], 3)
 check("limite de uso persistente: execução pausada (pode ser retomada)", st["status"] == "paused")
+st = run_game(ctx_for("rl", FakeClient(follower)), "duopoly", ["P1", "P1"], 3)
+check("pausa antes de concluir o 1º período: a retomada recomeça e termina", st["status"] == "done", st)
+
+def cut_off(system, user, seed, n):
+    raise_text = reply(1.7)
+    return raise_text
+fcm = FakeClient(cut_off)
+orig = fcm.generate
+def gen_max(system, user, seed):
+    r = orig(system, user, seed)
+    r.finish_reason = "MAX_TOKENS"
+    return r
+fcm.generate = gen_max
+st = run_game(ctx_for("maxtok", fcm), "duopoly", ["P1", "P1"], 3)
+check("resposta cortada pelo limite de saída: pausa (não gasta 11 tentativas inúteis)",
+      st["status"] == "paused" and "MAX_TOKENS" in st["reason"] and len(read_calls(TMP / "maxtok")) == 1)
+
+def buggy(system, user, seed, n):
+    raise ZeroDivisionError("bug de programação")
+st = run_game(ctx_for("bug", FakeClient(buggy)), "duopoly", ["P1", "P1"], 3)
+check("erro inesperado: rastro completo salvo em errors.log",
+      st["status"] == "paused" and "ZeroDivisionError" in (TMP / "bug" / "errors.log").read_text(encoding="utf-8"))
 one = call_cost("gemini-3.5-flash-lite", None, 2000, 300, 0)
 st = run_game(ctx_for("budget", FakeClient(follower), budget=0.10), "duopoly", ["P1", "P1"], 300)
 spent = json.loads((TMP / "budget_spend.json").read_text())["spent_usd"]
@@ -360,6 +405,11 @@ if HAVE_SDK:
                                                     "status": "RESOURCE_EXHAUSTED"}}))
     k_400 = kinds(gerr.ClientError(400, {"error": {"code": 400, "message": "bad thinking level",
                                                    "status": "INVALID_ARGUMENT"}}))
+    k_quota = kinds(gerr.ClientError(429, {"error": {"code": 429, "message": (
+        "You exceeded your current quota, please check your plan and billing details."),
+        "status": "RESOURCE_EXHAUSTED"}}))
+    check("Gemini: a mensagem comum de limite de uso (cita 'billing details') espera e repete",
+          k_quota == "RateLimited", k_quota)
     check("Gemini: falha de rede e tempo esgotado → temporário; saldo zerado e 400 → pausa com motivo",
           (k_net, k_to, k_bill, k_400) == ("TransientAPIError", "TransientAPIError", "FatalAPIError", "FatalAPIError"),
           (k_net, k_to, k_bill, k_400))

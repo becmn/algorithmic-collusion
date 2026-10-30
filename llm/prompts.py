@@ -121,7 +121,9 @@ def user_prompt(ps: PromptSet, *, cost: float, ceiling: float, plans: str, insig
 # Preço: só o número no começo do campo, com $ opcional e separador de milhar em grupos de 3.
 # Recusa "1,85" (vírgula decimal: ambíguo); aceita ponto final ("1.85."). Resposta cortada é
 # recusada pelo finish_reason (diferente de STOP).
-PRICE = re.compile(r"\s*\$?\s*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)(?!\d|[.,]\d)")
+PRICE = re.compile(r"\s*\$?[\s*_`]*((?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?|\.\d+)(?!\d|[.,]\d|[eE][-+]?\d)")
+# enfeites comuns antes do número: negrito, aspas, colchetes, barra de tabela, ~, \boxed{, USD, $
+PRICE_LEAD = re.compile(r"^[\s*_`\"'\[(|~]*(?:\\boxed\{)?[\s*_`]*(?:USD|US\$)?[\s*_`]*(?=[$\d.])")
 
 
 class InvalidResponse(ValueError):
@@ -129,8 +131,12 @@ class InvalidResponse(ValueError):
 
 
 def _label_re(label: str):
-    """Rótulo no começo de uma linha (aceita espaços, *, # ou > antes, como em markdown)."""
-    return re.compile(r"(?im)^[ \t>*#_-]*" + re.escape(label.strip()))
+    """Rótulo no começo de uma linha. Aceita antes: espaços, markdown (*, #, >, _, -, |) e
+    numeração ("4." ou "4)"); e, se o rótulo termina em ":", negrito antes dos dois-pontos
+    ("**PRICE**:")."""
+    lab = label.strip()
+    core = re.escape(lab[:-1].rstrip()) + r"[ \t*_]*:" if lab.endswith(":") else re.escape(lab)
+    return re.compile(r"(?im)^[ \t>*#_|-]*(?:\d+[.)][ \t]*)?[*_]*" + core)
 
 
 def parse_response(ps: PromptSet, text: str, finish_reason: str | None = None) -> dict:
@@ -155,8 +161,10 @@ def parse_response(ps: PromptSet, text: str, finish_reason: str | None = None) -
     for k, f in enumerate(FIELDS):
         a = pos[f][1]
         b = pos[FIELDS[k + 1]][0] if k + 1 < len(FIELDS) else len(text)
-        out[f] = text[a:b].strip().lstrip(":").strip()
-    m = PRICE.match(out["price"].strip("*_ `"))
+        out[f] = text[a:b].strip().lstrip("*_:").strip()
+    field_ = out["price"].lstrip("*_ |")
+    lead = PRICE_LEAD.match(field_)
+    m = PRICE.match(field_[lead.end():] if lead else field_)
     if not m:
         raise InvalidResponse(f"preço ausente ou ilegível: {out['price'][:40]!r}")
     price = float(m.group(1).replace(",", ""))

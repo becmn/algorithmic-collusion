@@ -65,7 +65,10 @@ class FatalAPIError(RuntimeError):
     parâmetro recusado): a execução pausa com o motivo, para a Beatriz resolver e retomar."""
 
 
-BILLING_WORDS = ("billing", "prepay", "credit", "balance", "payment")
+# Frases de saldo/cobrança de verdade. NÃO usar "billing" sozinho: a mensagem comum de limite
+# de uso do Gemini diz "...please check your plan and billing details" e deve esperar e repetir.
+BILLING_WORDS = ("prepay", "credit balance", "insufficient balance", "billing account",
+                 "payment required", "billing is not enabled", "billing has been disabled")
 HTTP_TIMEOUT_MS = 180_000   # 3 min por chamada; sem isso o SDK espera para sempre
 
 

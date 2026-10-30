@@ -14,7 +14,7 @@ desvio comum com controle e placebo. O teste de competência (monopolista, P0) v
 | `client.py` | cliente do Gemini (SDK `google-genai`), custo por chamada, teto de gasto, espera em limite de uso |
 | `experiment.py` | execuções: salva a cada período (retomada), log de cada chamada, novas tentativas, desvio |
 | `run.py` | linha de comando (abaixo) |
-| `test_llm.py` | 45 conferências sem API (roda no CI) |
+| `test_llm.py` | 52 conferências sem API (roda no CI) |
 
 ## Passo a passo (no seu computador, PowerShell, na raiz do repositório, venv ativo)
 
@@ -60,6 +60,10 @@ fora do Git): serve só para ver o programa funcionando.
   com o motivo. Qualquer erro inesperado também pausa com o motivo salvo (retomável).
 - Resposta lida de forma estrita: cada rótulo no começo de uma linha, preço só número (sem
   vírgula decimal), resposta cortada (`finish_reason` diferente de STOP) conta como inválida.
+- Resposta cortada pelo limite de tokens de saída (MAX_TOKENS): a execução pausa na 1ª vez (repetir
+  com o mesmo limite não adianta); se acontecer, o limite sobe num plano novo, com registro.
+- Pausa antes de concluir o 1º período (chave errada, sem saldo): a retomada recomeça do zero.
+  Erro inesperado: o rastro completo fica em `errors.log` na pasta da execução.
 - As opções da chamada (raciocínio, Flex, limite de saída) ficam gravadas no plano e na pasta de
   cada execução; a retomada recusa opções diferentes.
 - Teto de gasto: o contador soma o custo a preço pago padrão (mesmo na camada gratuita e no Flex) e

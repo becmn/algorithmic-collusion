@@ -109,6 +109,9 @@ def compare(groups: dict) -> dict:
         pv[h] = p
     for h, v in holm(pv).items():
         res[h].update(v)
+        # a decisão segue o Protocolo (IC ajustado por Bonferroni); Holm é o teste reportado.
+        # Os dois podem discordar perto do limite: a discordância é registrada e citada no artigo.
+        res[h]["holm_ci_disagree"] = bool(v["reject"] != (res[h]["decision"] == "diferente"))
     return res
 
 

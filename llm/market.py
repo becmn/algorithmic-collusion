@@ -116,6 +116,7 @@ def duopoly_summary(mk: Market, p1, p2, alpha: float, beta: float = BETA) -> dic
         "mean_price_firm2": float(w2.mean() / alpha),
         "stabilized": stab(s1) and stab(s2),
         "periods_above_monopoly": int(((np.concatenate([p1, p2]) / alpha) > mk.pM).sum()),
+        "prices_above_ceiling": int((np.concatenate([p1, p2]) > mk.ceiling(alpha)).sum()),
     }
 
 

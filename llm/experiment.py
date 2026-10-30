@@ -29,6 +29,7 @@ import datetime as dt
 import hashlib
 import json
 import time
+import traceback
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -109,9 +110,21 @@ def write_json(path: Path, obj):
 def log_call(run_dir: Path, rec: dict):
     """Uma linha JSON por chamada, em texto simples (se o programa cair no meio de uma
     linha, só ela se perde; as outras continuam legíveis)."""
-    with open(run_dir / "calls.jsonl", "a", encoding="utf-8") as f:
-        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    p = run_dir / "calls.jsonl"
+    lead = ""
+    if p.is_file() and p.stat().st_size:
+        with open(p, "rb") as f:
+            f.seek(-1, 2)
+            if f.read(1) != b"\n":
+                lead = "\n"          # linha anterior cortada por uma queda: começa numa linha nova
+    with open(p, "a", encoding="utf-8") as f:
+        f.write(lead + json.dumps(rec, ensure_ascii=False) + "\n")
         f.flush()
+
+
+class OutputLimitHit(RuntimeError):
+    """Resposta cortada pelo limite de tokens de saída: repetir não adianta (o limite é o
+    mesmo); a execução pausa para aumentar --max-output num plano novo, com registro."""
 
 
 def read_calls(run_dir: Path, dedupe: bool = False) -> list:
@@ -194,6 +207,11 @@ def decide(ctx: Context, agent: AgentState, period: int, phase: str, monopoly: b
                "response": res.text, **res.extra, "prompt_tokens": res.prompt_tokens,
                "output_tokens": res.output_tokens, "thoughts_tokens": res.thoughts_tokens,
                "cost_usd": cost, "latency_s": round(latency, 3)}
+        if str(res.finish_reason or "").upper().endswith("MAX_TOKENS"):
+            rec.update(valid=False, error="resposta cortada pelo limite de saída (MAX_TOKENS)", price=None)
+            log_call(ctx.run_dir, rec)
+            raise RunPaused("resposta cortada pelo limite de tokens de saída (MAX_TOKENS): "
+                            "aumentar o limite exige plano novo, registrado em Decisões")
         try:
             parsed = parse_response(ps, res.text, res.finish_reason)
         except InvalidResponse as e:
@@ -252,6 +270,10 @@ def _load_or_init(ctx: Context, config: dict, agents: list):
         st = json.loads(st_path.read_text(encoding="utf-8"))
         if st["status"] in ("done", "stopped"):
             return st, None, None
+        if not st.get("agents"):
+            # pausou antes de concluir o 1º período: começa do zero (nada foi salvo)
+            ctx.log(f"Recomeçando {ctx.run_dir.name} (pausou antes do 1º período: {st.get('reason')})")
+            return None, agents, []
         agents = [AgentState(**a) for a in st["agents"]]
         rows = read_periods(ctx.run_dir)[: st["period"] - config.get("first_period", 1) + 1]
         ctx.log(f"Retomando {ctx.run_dir.name} do período {st['period'] + 1}")
@@ -261,9 +283,12 @@ def _load_or_init(ctx: Context, config: dict, agents: list):
     return None, agents, []
 
 
-def _finish(ctx, status: str, reason: str | None, extra: dict | None = None):
+def _finish(ctx, status: str, reason: str | None, extra: dict | None = None, tb: str | None = None):
     st = json.loads((ctx.run_dir / "state.json").read_text(encoding="utf-8")) \
         if (ctx.run_dir / "state.json").is_file() else {"period": 0, "agents": []}
+    if tb:   # erro inesperado: o rastro completo vai para um arquivo, para separar bug de pausa
+        with open(ctx.run_dir / "errors.log", "a", encoding="utf-8") as f:
+            f.write(f"--- {now()}\n{tb}\n")
     st.update(status=status, reason=reason, updated=now(), **(extra or {}))
     write_json(ctx.run_dir / "state.json", st)
     return st
@@ -296,7 +321,8 @@ def run_game(ctx: Context, kind: str, prefixes: list, periods: int = PERIODS) ->
     except RunPaused as e:
         return _finish(ctx, "paused", str(e))
     except Exception as e:  # noqa: BLE001 — erro inesperado: salva o motivo; retoma depois
-        return _finish(ctx, "paused", f"erro inesperado: {type(e).__name__}: {str(e)[:300]}")
+        return _finish(ctx, "paused", f"erro inesperado (ver errors.log): {type(e).__name__}: {str(e)[:300]}",
+                       tb=traceback.format_exc())
     if not rows or len(rows) < periods:   # nada a fazer (já estava completo)
         rows = read_periods(ctx.run_dir)
     p1 = [r["price_1"] for r in rows]
@@ -332,7 +358,7 @@ def run_deviation(ctx: Context, base_dir: Path) -> dict:
         if agents is None and bst["status"] != "done":
             return {"status": bst["status"], "reason": bst.get("reason")}
         if agents is not None:
-            start = (bst["period"] + 1) if bst else t0 + 1
+            start = max(bst["period"] + 1, t0 + 1) if bst else t0 + 1
             try:
                 run_periods(bctx, agents, rows, start, t0 + T_DEV, phase, {"kind": phase}, forced)
             except RunStopped as e:
@@ -342,8 +368,8 @@ def run_deviation(ctx: Context, base_dir: Path) -> dict:
                 _finish(bctx, "paused", str(e))
                 return {"status": "paused", "reason": str(e)}
             except Exception as e:  # noqa: BLE001
-                reason = f"erro inesperado: {type(e).__name__}: {str(e)[:300]}"
-                _finish(bctx, "paused", reason)
+                reason = f"erro inesperado (ver errors.log): {type(e).__name__}: {str(e)[:300]}"
+                _finish(bctx, "paused", reason, tb=traceback.format_exc())
                 return {"status": "paused", "reason": reason}
             _finish(bctx, "done", None)
         rows = read_periods(bctx.run_dir)
