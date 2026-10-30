@@ -5,7 +5,7 @@ Na raiz do repositório, com o venv ativo (passo a passo em llm/README.md):
 
   python llm/run.py competence --model gemini-3.5-flash-lite --budget 15
       teste de competência (monopolista, P0, 300 períodos, 1 execução por α) → results/llm_pilot/
-  python llm/run.py pilot --prompt P1 --alpha 1 --periods 30 --budget 15
+  python llm/run.py pilot --prompt P1 --alpha 1 --periods 30 --budget 20
       duopólio curto para medir limites, tokens, latência e respostas inválidas → results/llm_pilot/
   python llm/run.py plan --runs-per-prompt 21
       grava results/llm_plan.csv (P1 e P2 alternados, 7 por α); só depois do piloto
