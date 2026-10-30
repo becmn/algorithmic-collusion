@@ -39,6 +39,8 @@ self.onmessage = function (ev) {
       for (const k of ["tStable", "tMax"])
         if (opts[k] !== undefined && (!Number.isInteger(opts[k]) || opts[k] < 1))
           throw new Error(k + " inválido: use um inteiro ≥ 1.");
+      if (opts.memory !== undefined && opts.memory !== 0 && opts.memory !== 1)
+        throw new Error("memory inválido: use 0 (sem memória) ou 1 (com memória).");
       runId += 1;
       runLoop(runId, seed, opts, blockSize);
     } else if (msg.type === "stop") {

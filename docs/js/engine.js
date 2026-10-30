@@ -132,7 +132,10 @@
   }
 
   // ------------------------------------------------------------ sessão
-  // opts (opcional): alpha, beta, delta, tStable, tMax; o padrão é o do artigo.
+  // opts (opcional): alpha, beta, delta, tStable, tMax, memory; o padrão é o do artigo.
+  // memory = 1 (padrão): o estado é o par de preços do período anterior (225 estados).
+  // memory = 0: sem memória, um estado só (controle do teste de separação, Fase 1.8; o mesmo
+  // laço de controls.run_session_mem do Python, com Q inicial igual e um estado).
   function createSession(mk, seed, opts) {
     opts = opts || {};
     const m = mk.m, S = mk.S;
@@ -144,6 +147,7 @@
       delta: delta,
       tStable: opts.tStable !== undefined ? opts.tStable : mk.tStable,
       tMax: opts.tMax !== undefined ? opts.tMax : mk.tMax,
+      memory: opts.memory === 0 ? 0 : 1,
       rng: makeRng(seed),
       Q: new Float64Array(2 * S * m),
       greedy: new Int32Array(2 * S),
@@ -168,6 +172,7 @@
     }
     sess.ring = new Float64Array(sess.tStable);
     sess.s = Math.floor(sess.rng() * S);   // estado inicial sorteado
+    if (sess.memory === 0) sess.s = 0;     // sem memória há um estado só
     return sess;
   }
 
@@ -177,7 +182,7 @@
     const mk = sess.mk, m = mk.m, S = mk.S, PI = mk.PI, prices = mk.prices;
     const Q = sess.Q, greedy = sess.greedy, maxq = sess.maxq, ring = sess.ring;
     const rng = sess.rng, alpha = sess.alpha, beta = sess.beta, delta = sess.delta;
-    const tStable = sess.tStable, tMax = sess.tMax;
+    const tStable = sess.tStable, tMax = sess.tMax, mem = sess.memory;
     let s = sess.s, t = sess.t, stable = sess.stable, converged = false;
     const tStart = t, tEnd = Math.min(t + blockSize, tMax);
     let sp1 = 0, sp2 = 0, spi = 0;
@@ -193,7 +198,7 @@
       for (let i = 0; i < 2; i++) {
         const ai = i === 0 ? a1 : a2;
         const row = (i * S + s) * m;
-        const target = (i === 0 ? pi1 : pi2) + delta * maxq[i * S + s1];
+        const target = (i === 0 ? pi1 : pi2) + delta * maxq[i * S + (mem ? s1 : 0)];
         Q[row + ai] = (1 - alpha) * Q[row + ai] + alpha * target;
         // argmax da linha que mudou (primeiro índice = menor preço em caso de empate)
         let best = 0, v = Q[row];
@@ -209,7 +214,7 @@
       sp1 += prices[a1]; sp2 += prices[a2]; spi += pbar;
 
       stable = changed ? 0 : stable + 1;   // 1 vez por período
-      s = s1;
+      s = mem ? s1 : 0;
       t += 1;
       if (stable >= tStable) { converged = true; break; }
     }
@@ -245,7 +250,27 @@
   // Resultado final: Δ no ciclo-limite (convergiu) ou média dos últimos tStable períodos.
   function finishSession(sess) {
     const mk = sess.mk, m = mk.m, PI = mk.PI;
-    const out = { seed: sess.seed, converged: sess.converged, periods: sess.t };
+    const out = { seed: sess.seed, converged: sess.converged, periods: sess.t, memory: sess.memory };
+    if (sess.memory === 0) {
+      // sem memória: a estratégia é um par de preços fixo; copiada para os 225 estados,
+      // o teste de desvio (deviation.js) roda sem mudança e a rival não tem como reagir
+      const g1 = sess.greedy[0], g2 = sess.greedy[mk.S];
+      const g = new Int32Array(2 * mk.S);
+      g.fill(g1, 0, mk.S); g.fill(g2, mk.S);
+      out.greedy = g;
+      out.cycle_idx = [[g1, g2]];
+      out.cycle_len = 1;
+      out.cycle_prices = [[mk.prices[g1], mk.prices[g2]]];
+      if (sess.converged) out.delta = deltaIndex(mk, 0.5 * (PI[(g1 * m + g2) * 2] + PI[(g1 * m + g2) * 2 + 1]));
+      else {
+        let sum = 0;
+        for (let k = 0; k < sess.ring.length; k++) sum += sess.ring[k];
+        out.cycle_len = 0;
+        out.delta = deltaIndex(mk, sum / sess.ring.length);
+      }
+      out.final_state_idx = [g1, g2];
+      return out;
+    }
     if (sess.converged) {
       const cyc = limitCycle(sess.greedy, sess.s, m);
       let pbar = 0;

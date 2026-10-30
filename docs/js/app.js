@@ -420,8 +420,9 @@
     $("delta-value").textContent = delta === null ? "–" : num(delta, 2);
     $("delta-when").textContent = delta === null ? "" : t(done ? "delta_final" : "delta_during");
     $("meter-fill").style.left = delta === null ? "0%" : (Math.max(0, Math.min(1, delta)) * 100).toFixed(1) + "%";
-    $("source-line").textContent = t(S.mode === "live" ? "source_live"
-      : (S.memory === "without" ? "source_recorded_k0" : "source_recorded"), { seed: S.seed });
+    const k0 = S.memory === "without";
+    $("source-line").textContent = t(S.mode === "live" ? (k0 ? "source_live_k0" : "source_live")
+      : (k0 ? "source_recorded_k0" : "source_recorded"), { seed: S.seed });
     $("badge").textContent = t(S.memory === "without" ? "badge_paper_k0" : "badge_paper");
     // referência: média das 1.000 sessões do mesmo modo (o número grande é só desta sessão)
     const sb = S.ref.separation_test.rows.find((x) => x.level === "beta4e-06");
@@ -462,9 +463,7 @@
     $("btn-deviate").disabled = !canDeviate;
     $("btn-deviate").textContent = t("btn_deviate");
     $("btn-new").textContent = t("btn_new");
-    $("btn-new").disabled = S.memory === "without";    // o motor ao vivo só tem memória
-    $("deviate-hint").textContent = S.memory === "without" ? t("live_only_memory")
-      : (canDeviate ? "" : t("btn_deviate_hint"));
+    $("deviate-hint").textContent = canDeviate ? "" : t("btn_deviate_hint");
     $("mem-with").setAttribute("aria-pressed", String(S.memory === "with"));
     $("mem-without").setAttribute("aria-pressed", String(S.memory === "without"));
     $("mem-note").hidden = S.memory !== "without";
@@ -658,7 +657,8 @@
     S.mode = "live"; S.seed = seed; S.blocks = []; S.shown = 0; S.final = null;
     S.paused = false; S.running = true;
     workerRun += 1; S.runId = workerRun;
-    w.postMessage({ type: "start", seed: seed, blockSize: S.blockSize });
+    // sem memória: o mesmo motor com um estado só (validado em test_engine_k0.js)
+    w.postMessage({ type: "start", seed: seed, blockSize: S.blockSize, opts: { memory: S.memory === "without" ? 0 : 1 } });
     S.dev = null; S.devShown = NT; clearTimeout(S.devTimer); renderDevTable();
     setStatus("status_computing");
     renderSide(); renderButtons(); renderScore(); drawLearning(); drawDeviation();
@@ -774,7 +774,7 @@
         if (r.deviation.protocol.horizon !== D.T_DEV) console.error("horizonte do desvio: JSON ≠ deviation.js");
         $("btn-run").addEventListener("click", onRun);
         $("btn-deviate").addEventListener("click", onDeviate);
-        $("btn-new").addEventListener("click", () => { if (S.memory === "with") startLive(randomSeed()); });
+        $("btn-new").addEventListener("click", () => startLive(randomSeed()));
         ["learn-chart", "dev-chart", "sep-main", "sep-chart"].forEach(attachHover);
         document.addEventListener("keydown", (ev) => { if (ev.key === "Escape") hideTip(); });
         $("mem-with").addEventListener("click", () => setMemory("with"));
