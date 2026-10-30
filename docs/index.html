@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Preços algorítmicos · simulador de Q-learning</title>
-  <meta name="description" content="Simulador no navegador: dois algoritmos de preço que nunca se comunicaram aprendem a cobrar acima do preço competitivo.">
+  <meta name="description" content="Simulador no navegador: dois algoritmos de preço que nunca se comunicaram aprendem a cobrar acima do preço competitivo (duopólio de Calvano et al., 2020).">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preload" href="fonts/newsreader-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
@@ -81,7 +81,7 @@
 
       <aside class="col-side side" aria-label="Δ">
         <p class="delta-label" data-i18n="delta_label"></p>
-        <p class="delta-value"><output id="delta-value">–</output></p>
+        <p class="delta-value"><output id="delta-value" aria-live="off">–</output></p>
         <p class="delta-when" id="delta-when"></p>
         <div class="meter" aria-hidden="true"><div class="meter-fill" id="meter-fill"></div></div>
         <p class="delta-scale" data-i18n="delta_scale"></p>
@@ -112,7 +112,7 @@
             <div id="dev-table" class="table-scroll"></div>
           </details>
         </figure>
-        <p class="verdict" id="verdict"></p>
+        <p class="verdict" id="verdict" aria-live="polite"></p>
         <p id="dev-aggregate"></p>
         <p class="caveat" id="dev-caveat"></p>
       </div>

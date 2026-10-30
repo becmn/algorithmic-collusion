@@ -67,7 +67,7 @@ h1, h2, h3 { font-family: var(--serif); font-weight: 600; color: var(--ink); }
 .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; min-height: 60px; flex-wrap: wrap; }
 .site-name { font-family: var(--serif); font-size: 1.3rem; font-weight: 600; }
 .topnav { display: flex; align-items: center; gap: 0 22px; flex-wrap: wrap; font-size: 0.95rem; }
-.topnav a { color: var(--ink); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.topnav a { color: var(--ink); text-decoration: none; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; }
 .topnav a:hover { text-decoration: underline; }
 .lang-btn { min-height: 44px; padding: 0 2px; border: 0; border-bottom: 2px solid var(--ink); background: none; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
 
@@ -161,6 +161,13 @@ td.em { color: var(--firm-b); font-weight: 700; }
   .controls { position: sticky; bottom: 0; z-index: 5; background: var(--bg); margin: 14px -18px 0; padding: 10px 18px; border-top: 1px solid var(--rule-strong); }
   .controls .btn { flex: 1 1 auto; padding: 0 10px; }
   .hint { flex-basis: 100%; }
+}
+/* Celular estreito: os botões empilham e a barra ficaria alta demais por cima do gráfico
+   (WCAG 2.4.11, foco não encoberto); ela deixa de ser fixa. */
+@media (max-width: 480px) {
+  .controls { position: static; }
+}
+@media (max-width: 760px) {
   .topnav { gap: 0 14px; }
   .delta-value { font-size: 3.6rem; }
   table.results { font-size: 0.86rem; }
